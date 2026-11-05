@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Sistem Informasi Penyewaan Aset
 
-## Getting Started
+## Deskripsi Proyek
 
-First, run the development server:
+Sistem Informasi Penyewaan Aset merupakan aplikasi berbasis web yang dirancang untuk membantu proses pengelolaan aset dan penyewaan aset secara terstruktur, mulai dari pengelolaan data aset, pengajuan penyewaan, persetujuan, hingga pengembalian aset.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tujuan
+- Mempermudah pengelolaan data aset.
+- Mempermudah proses pengajuan penyewaan.
+- Membantu petugas dalam mengelola persetujuan penyewaan.
+- Mempermudah pemantauan status penyewaan dan pengembalian aset.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Teknologi yang Digunakan
+- Frontend: Next.js, JavaScript
+- Backend: Next.js Route Handlers
+- Database: PostgreSQL (Supabase)
+- Authentication: Supabase Auth
+- Storage: Supabase Storage
+- Deployment: Vercel
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Role Pengguna
+1. Admin
+2. Petugas
+3. Penyewa
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pembagian Tim
+| Role | Tanggung Jawab |
+|---|---|
+| Project Manager | Analisis, koordinasi, timeline, dokumentasi, dan testing |
+| Frontend Developer | Implementasi UI dan integrasi frontend |
+| Backend Developer | Database, API, autentikasi, dan logika bisnis |
 
-## Learn More
+## Status Proyek
 
-To learn more about Next.js, take a look at the following resources:
+Tahap: Persiapan dan perencanaan.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Struktur Dokumentasi
+- Analisis kebutuhan
+- Pembagian tugas
+- Timeline pengerjaan
+- Rancangan database
+- Desain UI/UX
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Anggota Kelompok
+Tambahkan nama dan identitas anggota kelompok di sini.
