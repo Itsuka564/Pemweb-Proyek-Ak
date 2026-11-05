@@ -42,4 +42,6 @@ Tahap: Persiapan dan perencanaan.
 - Desain UI/UX
 
 ## Anggota Kelompok
-Tambahkan nama dan identitas anggota kelompok di sini.
+Arvian Poetra Sadewa          2404140026
+Erlang Aquila Dinar Dewangga  2404140050
+Tomi Adyatma                  2404140069
