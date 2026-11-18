@@ -78,29 +78,36 @@ export default function Navbar({
 
     try {
       const supabase = createClient();
+      let isMounted = true;
+
+      const fetchProfileForUser = async (userId) => {
+        const { data: p } = await supabase
+          .from("profiles")
+          .select("id, full_name, role, phone")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (p && isMounted) {
+          setCurrentProfile(p);
+          setCurrentRole(p.role);
+        }
+      };
+
       supabase.auth.getUser().then(({ data }) => {
         const authUser = data?.user;
-        if (authUser) {
+        if (authUser && isMounted) {
           setCurrentUser(authUser);
-          supabase
-            .from("profiles")
-            .select("id, full_name, role, phone")
-            .eq("id", authUser.id)
-            .maybeSingle()
-            .then(({ data: p }) => {
-              if (p) {
-                setCurrentProfile(p);
-                setCurrentRole(p.role);
-              }
-            });
+          fetchProfileForUser(authUser.id);
         }
       });
 
       const { data: authListener } = supabase.auth.onAuthStateChange(
-        (_event, session) => {
+        (event, session) => {
+          if (!isMounted) return;
           if (session?.user) {
             setCurrentUser(session.user);
-          } else {
+            fetchProfileForUser(session.user.id);
+          } else if (event === "SIGNED_OUT") {
             setCurrentUser(null);
             setCurrentRole(null);
             setCurrentProfile(null);
@@ -109,6 +116,7 @@ export default function Navbar({
       );
 
       return () => {
+        isMounted = false;
         authListener?.subscription?.unsubscribe();
       };
     } catch {

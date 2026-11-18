@@ -14,9 +14,15 @@ export default function LoginForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      {notice === "email_confirmation_sent" && (
+        <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-900">
+          ✉️ Pendaftaran berhasil! Silakan periksa email Anda (termasuk folder spam) untuk mengonfirmasi pendaftaran akun sebelum masuk.
+        </div>
+      )}
+
       {notice === "login_required" && (
         <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-900">
-          ℹ️ Silakan masuk ke akun Anda terlebih dahulu untuk mengakses katalog aset dan layanan penyewaan.
+          ℹ️ Silakan masuk ke akun Anda terlebih dahulu untuk mengakses layanan penyewaan.
         </div>
       )}
 

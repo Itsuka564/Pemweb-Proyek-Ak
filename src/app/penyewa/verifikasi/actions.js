@@ -1,4 +1,7 @@
 "use server";
+import { randomUUID } from 'crypto';
+
+
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -40,15 +43,16 @@ export async function submitVerificationAction(prevState, formData) {
   }
 
   try {
-    const fileExt = file.name.split(".").pop() || "jpg";
-    const fileName = `${user.id}/${Date.now()}_${documentType}.${fileExt}`;
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    // Generate unique filename using crypto.randomUUID for collision safety
+    const fileName = `${user.id}/${randomUUID()}_${documentType}.${fileExt}`;
 
-    // Upload ke private bucket 'user-verifications'
-    const { error: uploadError } = await supabase.storage
-      .from("user-verifications")
+    // Upload ke private bucket 'user-verifications' without upsert to respect RLS
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('user-verifications')
       .upload(fileName, file, {
         contentType: file.type,
-        upsert: true,
+        upsert: false,
       });
 
     if (uploadError) {
@@ -72,6 +76,8 @@ export async function submitVerificationAction(prevState, formData) {
       });
 
     if (dbError) {
+      // Cleanup uploaded file to avoid orphaned objects
+      await supabase.storage.from('user-verifications').remove([fileName]);
       return { error: `Gagal menyimpan data verifikasi: ${dbError.message}` };
     }
 

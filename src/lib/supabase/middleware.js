@@ -6,13 +6,17 @@ export async function updateSession(request) {
     request,
   });
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")
+  ) {
     return supabaseResponse;
   }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
@@ -33,99 +37,91 @@ export async function updateSession(request) {
     }
   );
 
+  // Helper untuk melakukan redirect sambil tetap meneruskan semua cookie session Supabase
+  const createRedirect = (destination) => {
+    const url = new URL(destination, request.url);
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
+  };
+
+  // Validasi sesi autentikasi menggunakan getUser() di sisi server
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
 
-  // Proteksi rute Admin
+  // Jika pengguna sudah login dan mencoba mengakses halaman masuk atau daftar,
+  // arahkan langsung ke dashboard sesuai dengan perannya
+  if (user && (pathname === "/masuk" || pathname === "/daftar")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const role = profile?.role || "penyewa";
+    if (role === "admin") {
+      return createRedirect("/admin/dashboard");
+    } else if (role === "petugas") {
+      return createRedirect("/petugas/dashboard");
+    } else {
+      return createRedirect("/penyewa/dashboard");
+    }
+  }
+
+  // Proteksi rute Admin (/admin/*)
   if (pathname.startsWith("/admin")) {
     if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/masuk";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      return createRedirect(`/masuk?redirect=${encodeURIComponent(pathname)}`);
     }
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (profile?.role !== "admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/masuk";
-      return NextResponse.redirect(url);
+      // Jika pengguna bukan admin, kembalikan ke dashboard yang sesuai (jangan paksa login ulang)
+      if (profile?.role === "petugas") {
+        return createRedirect("/petugas/dashboard");
+      }
+      return createRedirect("/penyewa/dashboard");
     }
   }
 
-  // Proteksi rute Petugas
+  // Proteksi rute Petugas (/petugas/*)
   if (pathname.startsWith("/petugas")) {
     if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/masuk";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      return createRedirect(`/masuk?redirect=${encodeURIComponent(pathname)}`);
     }
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (profile?.role !== "petugas" && profile?.role !== "admin") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/masuk";
-      return NextResponse.redirect(url);
+      return createRedirect("/penyewa/dashboard");
     }
   }
 
-  // Proteksi rute Penyewa
+  // Proteksi rute Penyewa (/penyewa/*)
   if (pathname.startsWith("/penyewa")) {
     if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/masuk";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      return createRedirect(`/masuk?redirect=${encodeURIComponent(pathname)}`);
     }
   }
 
-  // Proteksi rute Katalog (hanya untuk penyewa yang telah disetujui verifikasinya)
-  if (pathname.startsWith("/katalog")) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/masuk";
-      url.searchParams.set("notice", "login_required");
-      return NextResponse.redirect(url);
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    // Admin dan Petugas bebas membuka katalog
-    if (profile?.role !== "admin" && profile?.role !== "petugas") {
-      const { data: verification } = await supabase
-        .from("user_verifications")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("status", "disetujui")
-        .maybeSingle();
-
-      if (!verification) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/penyewa/verifikasi";
-        url.searchParams.set("notice", "verification_required");
-        return NextResponse.redirect(url);
-      }
-    }
-  }
+  // Catatan: Rute /katalog dan beranda (/) bersifat publik untuk penjelajahan aset.
+  // Pengajuan sewa (/penyewa/ajukan) tetap terproteksi di rute /penyewa.
 
   return supabaseResponse;
 }
+
 

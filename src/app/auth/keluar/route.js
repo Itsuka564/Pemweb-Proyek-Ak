@@ -6,7 +6,8 @@ export async function GET(request) {
   await supabase.auth.signOut();
 
   const url = request.nextUrl.clone();
-  url.pathname = "/masuk";
+  url.pathname = "/";
   return NextResponse.redirect(url);
 }
+
 
