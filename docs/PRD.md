@@ -4,8 +4,8 @@
 **Kelompok:** 10  
 **Jenis Proyek:** Proyek Akhir  
 **Platform:** Web Application  
-**Status Dokumen:** Draft – Revisi  
-**Versi:** 1.0  
+**Status:** Draft Revisi berdasarkan arahan dosen  
+**Versi:** 1.1  
 **Tahun:** 2026
 
 ---
@@ -18,410 +18,491 @@
 | Kelompok | 10 |
 | Platform | Website |
 | Pengguna Utama | Penyewa, Petugas, Admin |
-| Frontend | Next.js, React, JavaScript |
+| Frontend | Next.js, React |
 | Backend | Next.js Route Handlers / Server Actions |
-| Database | PostgreSQL |
-| ORM | Prisma / Drizzle / pg |
-| Validasi | Zod |
-| Deployment Web | Vercel |
+| Database | PostgreSQL pada Supabase |
+| Authentication | Supabase Auth |
+| Akses database | Prisma / Drizzle / `pg`, disesuaikan hasil audit |
+| Validasi | Zod atau setara |
 | Object Storage | Supabase Storage / Cloudflare R2 |
+| Payment Gateway | Midtrans Sandbox |
+| Deployment web | Vercel |
 | Background Worker | BullMQ + Redis atau alternatif setara |
-| Notifikasi | Web Push Notification dengan VAPID |
+| Notifikasi | Web Push dengan VAPID dan Service Worker |
+
+Pilihan JavaScript atau TypeScript harus mengikuti ketentuan teknis dosen dan kondisi repository. Jangan mengubah bahasa proyek yang sudah berjalan tanpa keputusan kelompok.
 
 ## 2. Latar Belakang
 
-Pengelolaan penyewaan aset membutuhkan sistem yang dapat mengatur informasi inventaris, tarif, ketersediaan, pengajuan penyewaan, persetujuan, serta proses serah terima dan pengembalian aset.
+Pengelolaan penyewaan aset membutuhkan sistem untuk mengatur informasi inventaris, tarif, ketersediaan, verifikasi calon penyewa, pengajuan penyewaan, persetujuan, pembayaran, dokumen kontrak, serah terima, dan pengembalian.
 
-Proses yang tidak terintegrasi berpotensi menimbulkan kesulitan dalam memeriksa ketersediaan aset, pencatatan transaksi, pengelolaan kondisi aset, dan pemantauan status penyewaan.
+Sistem ditujukan untuk satu entitas pengelola aset, baik instansi maupun pihak swasta. Sistem bukan marketplace multi-pemilik dan bukan sistem reservasi kamar hotel.
 
-Oleh karena itu, dikembangkan Sistem Informasi Penyewaan Aset berbasis web untuk mengintegrasikan proses pengelolaan aset dan transaksi penyewaan melalui satu aplikasi.
+Jenis aset yang dikelola meliputi tanah, gedung pertemuan, ruangan, dan aset sejenis yang dapat disewakan.
 
 ## 3. Tujuan Produk
 
-Sistem dikembangkan dengan tujuan:
+1. Memudahkan pengelola mengelola inventaris, kondisi, tarif, dan status aset.
+2. Memungkinkan calon penyewa mendaftar dan mengajukan verifikasi identitas/legalitas.
+3. Memungkinkan penyewa terverifikasi melihat katalog dan mengajukan penyewaan.
+4. Mencegah benturan penyewaan pada unit aset dan hari kalender yang sama.
+5. Mengelola persetujuan dan pembayaran melalui Midtrans Sandbox.
+6. Menyediakan bukti pembayaran dan dokumen PKS setelah pembayaran terkonfirmasi.
+7. Membantu Petugas mencatat serah terima dan pengembalian.
+8. Menyediakan riwayat transaksi, notifikasi, dan laporan.
+9. Menyimpan data secara persisten dan menerapkan kontrol akses berdasarkan role.
 
-1. Memudahkan pengguna melihat katalog dan informasi aset.
-2. Memungkinkan penyewa mengajukan penyewaan berdasarkan periode yang diinginkan.
-3. Membantu admin mengelola inventaris, kategori, tarif, persetujuan, dan laporan.
-4. Membantu petugas mencatat serah terima dan pengembalian aset.
-5. Mencegah penyewaan ganda pada unit aset dengan periode yang bertabrakan.
-6. Menyimpan data transaksi dan riwayat perubahan status secara persisten.
-7. Memberikan notifikasi kepada pengguna melalui Web Push pada kejadian bisnis penting.
-
-## 4. Target Pengguna
-
-Sistem memiliki tiga role utama.
+## 4. Target Pengguna dan Hak Akses
 
 ### 4.1 Penyewa
-
-Pengguna yang mencari aset dan melakukan pengajuan penyewaan.
-
-Kebutuhan:
-- Melihat katalog dan detail aset.
-- Memeriksa ketersediaan aset.
+- Registrasi, login, dan mengelola profil.
+- Mengunggah dokumen KTP/NPWP/NIB sesuai kebutuhan.
+- Melihat status verifikasi dan memperbaiki dokumen yang ditolak.
+- Setelah verifikasi disetujui Admin, melihat katalog dan detail aset.
+- Memeriksa ketersediaan, tarif, dan periode sewa.
 - Mengajukan penyewaan.
-- Melihat estimasi biaya.
-- Melihat status dan riwayat transaksi.
-- Menerima notifikasi persetujuan atau penolakan.
+- Melakukan pembayaran setelah pengajuan disetujui.
+- Melihat bukti pembayaran dan PKS.
+- Melihat aset yang sedang/pernah disewa, tanggal mulai/selesai, dan riwayat.
+- Mengunduh atau mencetak ulang PKS.
+- Menerima notifikasi.
+
+Penyewa hanya boleh mengakses data miliknya sendiri.
 
 ### 4.2 Petugas
-
-Pengguna yang bertanggung jawab atas proses serah terima dan pengembalian aset.
-
-Kebutuhan:
 - Melihat transaksi yang ditugaskan.
-- Melihat daftar tugas serah terima.
-- Mencatat kondisi awal aset.
-- Mencatat pengembalian aset.
-- Mencatat kondisi akhir dan kerusakan.
-- Memantau tindak lanjut kondisi aset.
+- Melihat jadwal serah terima dan pengembalian.
+- Mencatat waktu dan kondisi awal aset.
+- Mencatat waktu dan kondisi akhir aset.
+- Mencatat kerusakan, catatan, dan bukti pendukung.
+- Melihat riwayat tugas.
+
+Petugas hanya dapat mengakses transaksi sesuai penugasan. Petugas tidak menyetujui pengajuan atau mengelola tarif/aset dalam rancangan ini.
 
 ### 4.3 Admin
-
-Pengguna yang bertanggung jawab atas pengelolaan keseluruhan sistem.
-
-Kebutuhan:
-- Mengelola data aset dan kategori.
-- Mengelola tarif penyewaan.
-- Melihat seluruh transaksi.
+- Mengelola pengguna dan role.
+- Memeriksa dan memutuskan verifikasi dokumen pengguna.
+- Mengelola kategori, data aset, foto, tarif, dan status operasional.
+- Melihat kalender penyewaan.
 - Menyetujui atau menolak pengajuan.
-- Melihat laporan.
-- Mengelola akun dan role pengguna.
+- Melihat status pembayaran dan dokumen PKS.
+- Menugaskan Petugas.
+- Mengelola laporan dan pengaturan operasional.
 
 ## 5. Ruang Lingkup Produk
 
-### 5.1 Fitur Utama
+### 5.1 Fitur utama
 
 | ID | Fitur | Deskripsi | Pengguna |
 |---|---|---|---|
-| F-01 | Autentikasi | Login, logout, dan pengelolaan sesi pengguna | Semua role |
-| F-02 | Manajemen kategori | Menambah, mengubah, dan menonaktifkan kategori | Admin |
-| F-03 | Manajemen aset | Mengelola informasi dan kondisi unit aset | Admin |
-| F-04 | Katalog aset | Menampilkan daftar dan detail aset | Semua role |
-| F-05 | Pencarian dan filter | Mencari aset berdasarkan nama, kategori, kondisi, dan ketersediaan | Semua role |
-| F-06 | Cek ketersediaan | Memeriksa ketersediaan aset berdasarkan periode | Sistem |
-| F-07 | Pengajuan sewa | Membuat pengajuan penyewaan | Penyewa |
-| F-08 | Kalkulasi biaya | Menghitung biaya berdasarkan tarif dan durasi | Sistem |
-| F-09 | Persetujuan admin | Menyetujui atau menolak pengajuan | Admin |
-| F-10 | Serah terima | Mencatat penyerahan dan kondisi awal aset | Petugas |
-| F-11 | Pengembalian | Mencatat pengembalian dan kondisi akhir aset | Petugas |
-| F-12 | Pembaruan ketersediaan | Memperbarui status ketersediaan setelah pengembalian | Sistem |
-| F-13 | Riwayat transaksi | Menampilkan riwayat penyewaan | Penyewa, Admin |
-| F-14 | Laporan | Menampilkan rekapitulasi aset dan transaksi | Admin |
-| F-15 | Web Push Notification | Mengirim notifikasi browser melalui antrean dan worker | Semua role sesuai kejadian |
+| F-01 | Autentikasi | Registrasi, login, logout, sesi | Semua role |
+| F-02 | Profil pengguna | Pengelolaan data profil | Penyewa, Admin |
+| F-03 | Verifikasi pengguna | Upload dan pemeriksaan KTP/NPWP/NIB | Penyewa, Admin |
+| F-04 | Manajemen kategori | CRUD kategori aset | Admin |
+| F-05 | Manajemen aset | Data aset, luas, lokasi, fasilitas, kondisi, status, foto | Admin |
+| F-06 | Manajemen tarif | Tarif harian, bulanan, tahunan | Admin |
+| F-07 | Katalog aset | Daftar dan detail aset setelah verifikasi disetujui | Penyewa terverifikasi |
+| F-08 | Pencarian dan filter | Pencarian aset berdasarkan nama/kategori/lokasi/status | Penyewa terverifikasi |
+| F-09 | Kalender ketersediaan | Pengecekan hari kalender dan buffer | Sistem, Penyewa, Admin |
+| F-10 | Pengajuan sewa | Pengajuan periode dan tujuan penyewaan | Penyewa |
+| F-11 | Kalkulasi biaya | Perhitungan berdasarkan tarif database | Sistem |
+| F-12 | Persetujuan | Setujui/tolak pengajuan dan alasan | Admin |
+| F-13 | Pembayaran | Integrasi Midtrans Sandbox | Penyewa, Sistem |
+| F-14 | Bukti pembayaran | Rincian pembayaran yang terkonfirmasi | Penyewa, Admin |
+| F-15 | Dokumen PKS | Penerbitan setelah pembayaran, preview, unduh, cetak ulang | Penyewa, Admin |
+| F-16 | Serah terima | Pencatatan kondisi awal aset | Petugas |
+| F-17 | Pengembalian | Pencatatan kondisi akhir dan kerusakan | Petugas |
+| F-18 | Riwayat transaksi | Status, aset, periode, tanggal selesai | Penyewa, Admin |
+| F-19 | Penugasan Petugas | Menugaskan Petugas ke transaksi | Admin |
+| F-20 | Laporan | Rekap aset, transaksi, dan pembayaran | Admin |
+| F-21 | Notifikasi | In-app dan Web Push | Semua role sesuai kejadian |
+| F-22 | Pengaturan operasional | Buffer persiapan dan tenggat pembayaran | Admin |
 
-### 5.2 Batasan Produk
+### 5.2 Batasan
+- Sistem hanya mengelola aset milik satu entitas.
+- Domain aset utama adalah tanah, gedung pertemuan, dan ruangan.
+- Penyewaan diblokir berdasarkan hari kalender, meskipun pemakaian hanya beberapa jam.
+- Pembayaran menggunakan Midtrans Sandbox untuk simulasi.
+- PKS diterbitkan setelah pembayaran terkonfirmasi.
+- Dokumen identitas untuk demonstrasi harus fiktif.
+- File disimpan di object storage, bukan Base64 dalam database.
+- Fitur tambahan dikerjakan setelah alur inti berjalan.
 
-1. Pembayaran berupa pencatatan dan konfirmasi status di aplikasi. Payment gateway tidak diwajibkan.
-2. Data dummy menggunakan identitas fiktif.
-3. Minimal tersedia 5 unit aset dan 5 transaksi penyewaan dengan variasi status.
-4. Foto aset disimpan di object storage, bukan dalam bentuk Base64 di database.
-5. Fitur tambahan dikerjakan setelah seluruh alur wajib berjalan.
+## 6. Aturan Verifikasi Pengguna
 
-## 6. Matriks Hak Akses
+1. Pengguna mendaftar dan melengkapi profil.
+2. Pengguna mengunggah dokumen KTP/NPWP/NIB sesuai kebutuhan verifikasi.
+3. Dokumen disimpan pada private object storage.
+4. Status awal verifikasi `PENDING`.
+5. Admin memeriksa dokumen dan menyetujui atau menolak.
+6. Jika ditolak, Admin menyimpan alasan.
+7. Pengguna dapat mengunggah ulang dokumen.
+8. Jika disetujui, status menjadi `APPROVED`.
+9. Penyewa baru dapat melihat katalog setelah verifikasi disetujui Admin.
 
-| Aktivitas | Penyewa | Petugas | Admin |
-|---|---|---|---|
-| Melihat katalog | Ya | Ya | Ya |
-| Melihat detail aset | Ya | Ya | Ya |
-| Mengajukan sewa | Ya | Tidak | Tidak |
-| Melihat transaksi | Milik sendiri | Yang ditugaskan | Semua |
-| Menyetujui pengajuan | Tidak | Tidak | Ya |
-| Menolak pengajuan | Tidak | Tidak | Ya |
-| Mengelola aset | Tidak | Tidak | Ya |
-| Mengelola kategori dan tarif | Tidak | Tidak | Ya |
-| Mencatat serah terima | Tidak | Ya | Dapat melihat |
-| Mencatat pengembalian | Tidak | Ya | Dapat melihat |
-| Melihat laporan keseluruhan | Tidak | Tidak | Ya |
-| Mengelola pengguna dan role | Tidak | Tidak | Ya |
+Status: `PENDING`, `APPROVED`, `REJECTED`, `RESUBMISSION_REQUIRED`.
 
-**Ketentuan keamanan:** pemeriksaan role dan kepemilikan data wajib dilakukan pada server dan/atau database. Menyembunyikan menu pada frontend saja tidak dianggap sebagai pengamanan yang cukup.
+Endpoint katalog harus memeriksa status verifikasi di backend. Menyembunyikan halaman atau tombol di frontend saja tidak cukup.
 
-## 7. Alur Bisnis Sistem
+## 7. Aturan Aset dan Tarif
 
-### 7.1 Alur Penyewaan
+Admin mengelola:
+- Nama dan kode aset.
+- Kategori/jenis aset.
+- Luas atau ukuran area.
+- Lokasi.
+- Deskripsi dan fasilitas.
+- Foto.
+- Tarif harian, bulanan, tahunan.
+- Kondisi fisik.
+- Status operasional.
 
-1. Penyewa membuka katalog aset.
-2. Penyewa memilih aset yang diinginkan.
-3. Penyewa menentukan tanggal mulai dan tanggal selesai.
-4. Backend memeriksa kondisi aset, status, dan benturan periode.
-5. Sistem menghitung estimasi biaya berdasarkan tarif yang tersimpan di database.
-6. Penyewa mengirim pengajuan.
-7. Sistem menyimpan transaksi dengan status Menunggu Persetujuan.
-8. Admin menerima notifikasi pengajuan.
-9. Admin menyetujui atau menolak pengajuan.
-10. Penyewa menerima notifikasi hasil keputusan.
-11. Jika disetujui, aset dijadwalkan untuk periode penyewaan.
-12. Petugas melakukan serah terima dan mencatat kondisi awal.
-13. Status transaksi menjadi Sedang Disewa.
-14. Petugas mencatat pengembalian dan kondisi akhir.
-15. Sistem memperbarui status transaksi menjadi Dikembalikan.
-16. Aset kembali Tersedia jika kondisinya layak dan tidak terikat transaksi aktif.
+Kondisi fisik:
+- `GOOD`
+- `NEEDS_INSPECTION`
+- `DAMAGED`
 
-### 7.2 Alur Penolakan
+Status operasional:
+- `READY`
+- `MAINTENANCE`
+- `UNAVAILABLE`
 
-1. Admin membuka daftar pengajuan.
-2. Admin memilih pengajuan berstatus Menunggu Persetujuan.
-3. Admin memilih tindakan Tolak.
-4. Admin memasukkan alasan penolakan.
-5. Sistem menyimpan status Ditolak beserta waktu dan identitas admin.
-6. Penyewa menerima notifikasi dan dapat melihat alasan penolakan.
+Status okupansi seperti dipesan atau sedang disewa ditentukan dari transaksi dan kalender. Aset yang sedang perawatan, tidak tersedia, atau tidak layak tidak dapat diajukan.
 
-### 7.3 Aturan Ketersediaan
+## 8. Aturan Penyewaan dan Ketersediaan
 
-Satu unit aset tidak boleh memiliki dua transaksi aktif dengan periode yang bertumpang tindih.
+### 8.1 Penyewaan berdasarkan hari kalender
+- Tanggal mulai dan tanggal selesai bersifat inklusif.
+- Penggunaan beberapa jam tetap memblokir satu hari kalender penuh.
+- Jika aset telah dipesan pada suatu tanggal, penyewa lain tidak boleh menyewa aset yang sama pada tanggal tersebut.
+- Jam penggunaan, jika dicatat, hanya menjadi informasi tambahan dan bukan dasar ketersediaan.
 
-Transaksi yang memblokir periode:
-- Disetujui.
-- Sedang Disewa.
+Contoh: aset disewa pada 20 November untuk penggunaan pukul 10.00–13.00. Seluruh tanggal 20 November tetap terblokir.
 
-Transaksi Menunggu Persetujuan, Ditolak, dan Dibatalkan tidak memblokir periode.
+### 8.2 Buffer persiapan
+Sistem memperhitungkan waktu persiapan tempat sebelum dan/atau sesudah penyewaan. Durasi buffer harus dapat dikonfigurasi Admin. Angka final belum ditentukan sehingga tidak boleh di-hardcode sebagai keputusan bisnis.
 
-Backend wajib memeriksa ulang ketersediaan saat admin menyetujui pengajuan. Pemeriksaan diperkuat dengan transaksi database dan mekanisme penguncian atau constraint untuk mencegah dua pengajuan bersamaan memperoleh alokasi yang sama.
+### 8.3 Pengecekan benturan
+Backend wajib:
+1. Memeriksa status operasional dan kondisi aset.
+2. Memeriksa transaksi yang memblokir periode.
+3. Memeriksa seluruh tanggal inklusif.
+4. Memperhitungkan buffer.
+5. Memeriksa ulang saat pengajuan dan saat Admin menyetujui.
+6. Mencegah double booking akibat request bersamaan menggunakan transaksi/locking/constraint PostgreSQL yang sesuai.
 
-### 7.4 Aturan Kondisi Aset
+Rancangan status pemblokiran:
+- `PENDING_APPROVAL`: tidak memblokir secara default.
+- `APPROVED_PENDING_PAYMENT`: menahan slot sementara sampai tenggat pembayaran.
+- `PAID` dan `RENTED`: memblokir sesuai periode.
+- `REJECTED`, `CANCELLED`, `PAYMENT_EXPIRED`, `RETURNED`: tidak memblokir setelah masa blokir berakhir.
 
-Kondisi fisik dan status ketersediaan merupakan dua informasi yang berbeda.
+Tenggat pembayaran harus dapat dikonfigurasi. Jika pembayaran kedaluwarsa, slot harus dilepaskan.
 
-- Kondisi aset: Baik, Perlu Pemeriksaan, atau Rusak.
-- Status ketersediaan: Tersedia, Dipesan, Sedang Disewa, atau Dalam Perawatan.
+## 9. Tarif dan Perhitungan Biaya
 
-Aset dengan kondisi tidak layak atau status Dalam Perawatan tidak dapat diajukan untuk disewa.
+Setiap aset mendukung tarif:
+- Harian.
+- Bulanan.
+- Tahunan.
 
-Jika aset dikembalikan dalam kondisi tidak layak, aset harus masuk Dalam Perawatan dan tidak langsung tersedia kembali.
+Backend menghitung nominal berdasarkan tarif yang tersimpan di database. Backend tidak mempercayai nominal total dari browser.
 
-## 8. Rancangan Halaman
+Hal yang belum diputuskan:
+- Bulanan berdasarkan bulan kalender atau periode 30 hari.
+- Tahunan berdasarkan tahun kalender atau periode 12 bulan.
+- Aturan prorata dan pembulatan.
 
-Halaman sistem dibagi berdasarkan area pengguna.
+Buat modul perhitungan terpisah dan dokumentasikan asumsi sementara. Keputusan final harus disepakati kelompok/dosen.
 
-### 8.1 Halaman Publik
+## 10. Alur Bisnis Penyewaan dan Pembayaran
 
-1. Beranda.
-2. Katalog aset.
-3. Detail aset.
-4. Login.
-5. Registrasi.
+1. Penyewa terverifikasi membuka katalog.
+2. Penyewa memilih aset dan melihat detail.
+3. Penyewa memilih tanggal mulai dan selesai.
+4. Sistem memeriksa ketersediaan termasuk buffer.
+5. Penyewa mengisi tujuan dan data pengajuan.
+6. Backend menghitung estimasi biaya.
+7. Pengajuan disimpan dengan status `PENDING_APPROVAL`.
+8. Admin meninjau pengajuan dan memeriksa ulang ketersediaan.
+9. Admin menyetujui atau menolak dengan alasan.
+10. Jika ditolak, penyewa melihat alasan penolakan.
+11. Jika disetujui, status menjadi `APPROVED_PENDING_PAYMENT` dan slot ditahan sampai tenggat pembayaran.
+12. Penyewa melakukan pembayaran melalui Midtrans Sandbox.
+13. Backend memverifikasi notifikasi/webhook Midtrans.
+14. Setelah pembayaran terkonfirmasi, transaksi menjadi `PAID`.
+15. Sistem menyimpan bukti pembayaran dan menerbitkan PKS.
+16. Petugas melakukan serah terima.
+17. Setelah masa sewa selesai, Petugas mencatat pengembalian.
+18. Sistem memperbarui kondisi dan ketersediaan aset.
 
-### 8.2 Halaman Penyewa
+## 11. Midtrans Sandbox dan Bukti Pembayaran
 
-1. Dashboard penyewa.
-2. Formulir pengajuan sewa.
-3. Daftar transaksi.
-4. Detail transaksi.
-5. Informasi masa sewa.
-6. Riwayat pengembalian.
+- Pembayaran hanya tersedia untuk pengajuan yang telah disetujui.
+- Order ID harus unik.
+- Nominal transaksi berasal dari backend.
+- Server Key hanya berada di backend.
+- Status `PAID` hanya boleh ditetapkan setelah webhook/notifikasi diverifikasi.
+- Redirect browser ke halaman sukses bukan bukti pembayaran.
+- Terapkan validasi signature, idempotency, dan pencegahan pembayaran ganda.
+- Simpan referensi transaksi, nominal, status, metode, dan waktu pembayaran.
+- Tangani status gagal, kedaluwarsa, dan notifikasi berulang.
 
-### 8.3 Halaman Petugas
+Bukti pembayaran menampilkan nomor transaksi/order, penyewa, aset, periode, nominal, metode, waktu, dan status pembayaran.
 
-1. Dashboard petugas.
-2. Daftar tugas serah terima.
-3. Form serah terima.
-4. Daftar pengembalian.
-5. Form pemeriksaan kondisi.
-6. Informasi ketersediaan aset.
+Jika kredensial Midtrans belum tersedia, siapkan environment variable dan dokumentasi konfigurasi. Jangan membuat pembayaran sukses palsu.
 
-### 8.4 Halaman Admin
+## 12. Dokumen PKS
 
-1. Dashboard admin.
-2. Data aset.
-3. Tambah dan edit aset.
-4. Manajemen kategori.
-5. Manajemen tarif.
-6. Daftar pengajuan.
-7. Detail dan keputusan pengajuan.
-8. Transaksi aktif.
-9. Laporan.
-10. Manajemen pengguna.
+PKS diterbitkan hanya setelah pembayaran terkonfirmasi.
 
-## 9. Kebutuhan Data dan Database
+Informasi minimal:
+- Nomor PKS.
+- Identitas entitas pengelola.
+- Identitas penyewa.
+- Informasi aset.
+- Periode penyewaan.
+- Nilai sewa.
+- Ketentuan perjanjian.
+- Tanggal penerbitan.
 
-Database menggunakan PostgreSQL dengan relasi antartabel.
+PKS dapat ditampilkan, diunduh sebagai PDF, dan dicetak ulang. File disimpan privat. Penyewa hanya dapat mengakses PKS miliknya sendiri.
 
-| Tabel | Fungsi |
+Identitas resmi entitas dan isi hukum final harus berasal dari pengelola/dosen; jangan mengarangnya. Gunakan placeholder pada template sampai data resmi tersedia.
+
+## 13. Serah Terima dan Pengembalian
+
+Petugas hanya dapat mengelola transaksi yang ditugaskan.
+
+Serah terima mencatat:
+- Waktu serah terima.
+- Kondisi awal.
+- Pihak yang menyerahkan/menerima.
+- Catatan dan bukti pendukung.
+
+Pengembalian mencatat:
+- Waktu pengembalian.
+- Kondisi akhir.
+- Kerusakan/kekurangan.
+- Catatan dan bukti pendukung.
+
+Jika aset dikembalikan dalam kondisi rusak atau perlu pemeriksaan, status operasional harus diperbarui dan aset tidak langsung tersedia.
+
+## 14. Status Transaksi
+
+| Status | Makna |
 |---|---|
-| profiles | Profil pengguna dan role |
-| asset_categories | Data kategori aset |
-| assets | Data unit aset |
-| rental_transactions | Data transaksi penyewaan |
-| handover_records | Catatan serah terima |
-| return_records | Catatan pengembalian |
-| notifications | Notifikasi dalam aplikasi |
-| push_subscriptions | Data subscription Web Push |
-| notification_jobs | Antrean notifikasi dan pencatatan proses worker |
+| `PENDING_APPROVAL` | Menunggu persetujuan |
+| `REJECTED` | Ditolak |
+| `APPROVED_PENDING_PAYMENT` | Disetujui, menunggu pembayaran |
+| `PAYMENT_EXPIRED` | Tenggat pembayaran berakhir |
+| `PAID` | Pembayaran terkonfirmasi |
+| `RENTED` | Sedang disewa |
+| `RETURNED` | Sudah dikembalikan |
+| `CANCELLED` | Dibatalkan |
 
-Relasi utama:
-- Satu profil dapat memiliki banyak transaksi.
-- Satu kategori memiliki banyak aset.
-- Satu aset dapat muncul dalam banyak transaksi pada periode berbeda.
-- Satu transaksi memiliki maksimal satu catatan serah terima.
-- Satu transaksi memiliki maksimal satu catatan pengembalian.
-- Satu pengguna dapat memiliki banyak notifikasi dan push subscription.
+Setiap perubahan status penting dicatat bersama status lama/baru, pelaku, waktu, dan alasan. Transisi status dibatasi oleh backend.
 
-Ketentuan integritas:
-- Primary key dan foreign key pada tabel terkait.
-- Kode aset dan kode transaksi bersifat unik.
-- Tarif dan total biaya tidak boleh negatif.
-- Tanggal selesai tidak boleh lebih awal dari tanggal mulai.
-- Benturan periode dicegah di backend dan database.
-- Perubahan transaksi yang saling terkait dilakukan secara konsisten.
+## 15. Rancangan Halaman
 
-## 10. Web Push Notification
+### Publik
+- Beranda.
+- Masuk.
+- Daftar.
 
-Web Push Notification merupakan kebutuhan wajib sistem.
+### Penyewa
+- Dashboard.
+- Profil dan verifikasi.
+- Katalog dan detail aset.
+- Kalender ketersediaan.
+- Form pengajuan.
+- Detail pengajuan/transaksi.
+- Pembayaran.
+- Bukti pembayaran.
+- Preview/unduh PKS.
+- Riwayat penyewaan dan tanggal selesai.
 
-Alur notifikasi:
+### Petugas
+- Dashboard.
+- Daftar tugas.
+- Detail tugas.
+- Serah terima.
+- Pengembalian.
+- Riwayat tugas.
 
-**Kejadian bisnis → Database → Persistent Queue → Background Worker → Web Push → Service Worker → Browser**
+### Admin
+- Dashboard.
+- Verifikasi pengguna.
+- Pengguna dan role.
+- Kategori aset.
+- Data aset dan foto.
+- Tarif.
+- Kalender penyewaan.
+- Persetujuan pengajuan.
+- Pembayaran dan PKS.
+- Penugasan Petugas.
+- Laporan.
+- Pengaturan buffer dan tenggat pembayaran.
 
-Kejadian yang memicu notifikasi:
+## 16. Kebutuhan Database
 
-| Kejadian | Penerima |
+Database menggunakan PostgreSQL pada Supabase. Entitas logis yang perlu dipenuhi oleh skema aktual:
+
+| Entitas/tabel logis | Fungsi |
 |---|---|
-| Pengajuan sewa terkirim | Admin |
-| Pengajuan disetujui | Penyewa |
-| Pengajuan ditolak | Penyewa |
-| Aset siap diserahkan | Penyewa/Petugas |
-| Pengingat pengembalian | Penyewa/Petugas |
+| `profiles` | Profil dan role |
+| `user_verifications` | Dokumen dan status verifikasi |
+| `asset_categories` | Kategori aset |
+| `assets` | Data aset |
+| `asset_photos` | Foto aset |
+| `asset_rates` | Tarif harian/bulanan/tahunan |
+| `rental_transactions` | Pengajuan dan transaksi |
+| `rental_transaction_items` | Item aset jika satu transaksi dapat memuat beberapa aset |
+| `rental_reviews` | Riwayat keputusan Admin |
+| `rental_status_history` | Riwayat status |
+| `payments` | Pembayaran Midtrans |
+| `rental_contracts` | Dokumen PKS |
+| `officer_assignments` | Penugasan Petugas |
+| `handover_records` | Serah terima |
+| `return_records` | Pengembalian |
+| `rental_settings` | Buffer dan tenggat pembayaran |
+| `notifications` | Notifikasi aplikasi |
+| `push_subscriptions` | Subscription Web Push |
+| `notification_jobs` | Antrean worker |
+
+Daftar tersebut adalah model logis, bukan instruksi membuat semua tabel baru. Audit skema Supabase aktual terlebih dahulu dan gunakan migration tambahan hanya untuk kebutuhan yang belum tersedia.
 
 Ketentuan:
-1. Menggunakan Service Worker dan VAPID.
-2. Izin notifikasi diminta melalui interaksi pengguna.
-3. Subscription disimpan dalam PostgreSQL.
-4. Background worker berjalan sebagai proses terpisah.
-5. Antrean persisten mendukung retry dan pencegahan pengiriman ganda.
-6. Subscription yang tidak valid dinonaktifkan.
-7. Kegagalan notifikasi tidak boleh membatalkan transaksi bisnis yang telah tersimpan.
-8. Klik notifikasi mengarahkan pengguna ke halaman yang relevan.
+- Primary key, foreign key, unique/check constraint, dan index.
+- Tarif/total tidak negatif.
+- `end_date >= start_date`.
+- Cegah benturan jadwal pada backend dan database.
+- Simpan snapshot tarif pada transaksi.
+- Dokumen identitas dan PKS menggunakan private storage.
+- Jangan menyimpan file Base64 di database.
+- Terapkan RLS dan otorisasi backend.
 
-## 11. Kebutuhan Nonfungsional
+## 17. Notifikasi dan Background Worker
+
+Alur:
+**Kejadian bisnis → Database → Persistent Queue → Background Worker → Web Push → Service Worker → Browser**
+
+Kejadian:
+- Pengajuan baru ke Admin.
+- Verifikasi disetujui/ditolak ke Penyewa.
+- Pengajuan disetujui/ditolak ke Penyewa.
+- Pembayaran terkonfirmasi.
+- PKS tersedia.
+- Pengingat serah terima/pengembalian.
+
+Ketentuan:
+- Service Worker dan VAPID.
+- Izin notifikasi diminta melalui interaksi pengguna.
+- Subscription disimpan di PostgreSQL.
+- Worker berjalan sebagai proses terpisah.
+- Queue mendukung retry dan idempotency.
+- Kegagalan push tidak membatalkan transaksi.
+- Worker di-host pada layanan yang mendukung proses background; jangan menganggap Vercel menjalankan worker permanen.
+
+## 18. Kebutuhan Nonfungsional dan Keamanan
 
 | Aspek | Kebutuhan |
 |---|---|
-| Keamanan | Autentikasi, otorisasi server, perlindungan secret, dan rate limiting |
-| Integritas | Mencegah penyewaan ganda dan transaksi tidak konsisten |
-| Persistensi | Data tetap tersedia setelah refresh dan login ulang |
-| Responsivitas | Tampilan dapat digunakan melalui desktop dan ponsel |
-| Umpan balik | Loading, empty, success, dan error state |
-| Kinerja | Pagination, pencarian database, indeks, dan penghindaran N+1 query |
-| Observability | Logging terstruktur dan pemantauan job worker |
-| Aksesibilitas | Alur utama dapat digunakan dengan keyboard |
+| Keamanan | Auth, otorisasi server, RLS, perlindungan secret, rate limiting |
+| Integritas | Pencegahan double booking dan transaksi tidak konsisten |
+| Persistensi | Data bertahan setelah refresh dan login ulang |
+| Responsivitas | Desktop, tablet, mobile |
+| Umpan balik | Loading, empty, success, error |
+| Kinerja | Pagination, indeks, query efisien |
+| Observability | Logging terstruktur dan pemantauan worker |
+| Aksesibilitas | Label, fokus keyboard, kontras memadai |
 
-## 12. Kriteria Keberhasilan Produk
+Jangan percaya `user_id`, `role`, harga, atau status dari browser. Service role key dan kredensial database tidak boleh terekspos ke frontend.
 
-Produk dianggap memenuhi kebutuhan utama apabila:
+## 19. Data Dummy dan Pengujian
 
-1. Pengguna dapat login dan mengakses halaman sesuai role.
-2. Katalog dan detail aset tampil berdasarkan data database.
-3. Penyewa dapat mengajukan penyewaan.
-4. Sistem menghitung biaya berdasarkan tarif database.
-5. Admin dapat menyetujui dan menolak pengajuan.
-6. Sistem mencegah benturan periode penyewaan.
-7. Petugas dapat mencatat serah terima dan pengembalian.
-8. Kondisi dan ketersediaan aset diperbarui secara konsisten.
-9. Admin dapat melihat laporan transaksi.
-10. Web Push Notification berjalan melalui background worker.
-11. Data tersimpan secara persisten.
-12. Aplikasi dapat diakses melalui URL deployment.
+Minimal:
+- 5 aset dengan variasi tanah, gedung pertemuan, dan ruangan.
+- 5 transaksi dengan variasi status.
+- Akun uji Penyewa, Petugas, dan Admin.
+- Data identitas fiktif.
 
-## 13. Data Dummy dan Pengujian
+Pengujian mencakup:
+1. Registrasi, login, dan proteksi halaman.
+2. Pengguna belum terverifikasi tidak dapat mengakses katalog.
+3. Upload dan keputusan verifikasi.
+4. CRUD aset, kategori, foto, dan tarif.
+5. Perhitungan tarif.
+6. Tanggal inklusif dan pemblokiran satu hari kalender.
+7. Buffer persiapan.
+8. Benturan jadwal dan request bersamaan.
+9. Persetujuan/penolakan.
+10. Webhook Midtrans valid, invalid, dan berulang.
+11. PKS hanya setelah pembayaran terkonfirmasi.
+12. Pembatasan akses transaksi/dokumen berdasarkan role dan ownership.
+13. Serah terima dan pengembalian.
+14. Kondisi aset rusak.
+15. Notifikasi dan worker.
+16. Rate limiting, persistensi, dan deployment.
 
-Minimal data untuk demonstrasi:
+Bukti pengujian tidak hanya screenshot UI, tetapi juga pengujian backend, database, otorisasi, webhook, dan log worker.
 
-- 5 unit aset.
-- 5 transaksi penyewaan.
-- Minimal satu akun penyewa.
-- Minimal satu akun petugas.
-- Minimal satu akun admin.
-
-Variasi status transaksi:
-- Menunggu Persetujuan.
-- Disetujui.
-- Ditolak.
-- Sedang Disewa.
-- Dikembalikan.
-
-Pengujian harus mencakup:
-- Pengajuan dengan tanggal valid dan tidak valid.
-- Perhitungan biaya.
-- Benturan jadwal.
-- Persetujuan dan penolakan.
-- Pengujian hak akses dan kepemilikan transaksi.
-- Serah terima dan pengembalian.
-- Pengembalian aset rusak.
-- Web Push dan background worker.
-- Rate limiting dan idempotency.
-- Deployment dan persistensi data.
-
-Bukti pengujian tidak hanya berupa screenshot UI, tetapi juga demonstrasi backend, pemeriksaan database, pengujian otorisasi, dan log worker.
-
-## 14. Teknologi dan Deployment
+## 20. Teknologi dan Deployment
 
 | Komponen | Teknologi |
 |---|---|
-| Code Editor | Visual Studio Code / editor sejenis |
-| Version Control | Git |
-| Repository | GitHub |
+| Version Control | Git/GitHub |
 | Frontend | Next.js, React |
 | Backend | Next.js Route Handlers / Server Actions |
-| Database | PostgreSQL |
-| ORM | Prisma / Drizzle / pg |
+| Database | PostgreSQL pada Supabase |
+| Authentication | Supabase Auth |
+| Database access | Prisma / Drizzle / pg |
 | Validation | Zod |
-| Authentication | Mengikuti keputusan integrasi autentikasi proyek |
 | Object Storage | Supabase Storage / Cloudflare R2 |
-| Queue | Redis dengan BullMQ atau alternatif setara |
+| Payment | Midtrans Sandbox |
+| Queue | Redis + BullMQ atau alternatif |
 | Notification | Web Push, VAPID, Service Worker |
-| Web Deployment | Vercel |
-| Worker Deployment | Host terpisah, misalnya Railway, Render, atau VPS |
+| Web deployment | Vercel |
+| Worker deployment | Hosting terpisah yang mendukung background process |
 
-Catatan: penggunaan Supabase Auth, Supabase sebagai PostgreSQL host, pilihan JavaScript atau TypeScript, dan hosting worker perlu mengikuti klarifikasi ketentuan teknis kepada dosen.
+Gunakan `.env.local` untuk secret dan sediakan `.env.example` tanpa nilai rahasia. Integrasi GitHub dengan Supabase tidak menggantikan kebutuhan mengatur koneksi database dan environment variable aplikasi.
 
-## 15. Prioritas Pengembangan
+## 21. Prioritas Pengembangan
 
-| Prioritas | Fitur |
-|---|---|
-| Tinggi | Autentikasi dan hak akses |
-| Tinggi | Katalog dan detail aset |
-| Tinggi | Manajemen aset dan kategori |
-| Tinggi | Pengajuan penyewaan dan perhitungan biaya |
-| Tinggi | Persetujuan dan penolakan |
-| Tinggi | Pemeriksaan benturan jadwal |
-| Tinggi | Serah terima dan pengembalian |
-| Tinggi | Integritas dan persistensi database |
-| Wajib | Web Push dan background worker |
-| Menengah | Dashboard dan laporan |
-| Menengah | Pencarian, filter, dan pagination |
-| Menengah | Penyempurnaan tampilan dan pengalaman pengguna |
+1. Audit repository dan skema Supabase.
+2. Koneksi Supabase PostgreSQL dan Auth.
+3. Proteksi role dan RLS.
+4. Profil dan verifikasi pengguna.
+5. Manajemen aset, kategori, foto, dan tarif.
+6. Katalog dan kalender.
+7. Pengajuan, kalkulasi, dan persetujuan.
+8. Midtrans Sandbox, bukti pembayaran, dan PKS.
+9. Penugasan Petugas, serah terima, dan pengembalian.
+10. Dashboard, laporan, dan notifikasi.
+11. Pengujian keamanan, integrasi, dan deployment.
 
-Prioritas tidak mengubah status Web Push dan background worker sebagai persyaratan wajib.
+## 22. Hal yang Perlu Dikonfirmasi
 
-## 16. Batasan dan Hal yang Perlu Dikonfirmasi
+1. Apakah satu pengajuan hanya memuat satu aset atau dapat beberapa aset?
+2. Tarif bulanan/tahunan dihitung berdasarkan bulan/tahun kalender atau periode 30/365 hari?
+3. Bagaimana prorata dan pembulatan?
+4. Berapa lama buffer persiapan sebelum dan sesudah penyewaan?
+5. Berapa lama tenggat pembayaran setelah persetujuan?
+6. Apakah pengajuan yang menunggu persetujuan menahan tanggal? Rancangan ini mengusulkan tidak.
+7. Bagaimana aturan pembatalan setelah pembayaran, denda, dan kerusakan?
+8. Apakah katalog sepenuhnya tertutup sampai verifikasi disetujui? Rancangan ini mengikuti arahan dosen: akses katalog setelah verifikasi Admin.
+9. Apa identitas resmi entitas dan template PKS yang harus digunakan?
+10. Apakah JavaScript atau TypeScript yang diwajibkan?
+11. Apakah Supabase Auth, ORM/driver PostgreSQL, dan worker eksternal sesuai ketentuan teknis dosen?
 
-Beberapa ketentuan teknis perlu dikonfirmasi kepada dosen:
+Keputusan final dicatat oleh PM dan disepakati kelompok/dosen sebelum diterapkan.
 
-1. Apakah Supabase Auth tetap boleh digunakan jika otorisasi dan business logic dilakukan melalui backend Next.js?
-2. Apakah PostgreSQL Supabase boleh diakses menggunakan Prisma, Drizzle, atau pg?
-3. Apakah implementasi harus menggunakan JavaScript atau TypeScript?
-4. Apakah background worker boleh di-host di luar Vercel?
-5. Apakah Supabase Storage menjadi pilihan utama untuk penyimpanan foto aset?
+## 23. Referensi Dokumen
+- Arahan dosen mengenai Sistem Informasi Penyewaan Aset.
+- Dokumen ketentuan proyek Tim 10.
+- `Technical_Requirements.md` (perlu dicocokkan kembali dengan versi aktual).
+- `desain-ui.md`.
+- `rancangan-database.md`.
+- ERD dan desain Figma.
 
-Keputusan akhir mengikuti ketentuan dosen dan hasil koordinasi kelompok.
-
-## 17. Referensi Dokumen
-
-PRD ini disusun berdasarkan:
-- Dokumen Kelengkapan Proyek Akhir Sistem Informasi Penyewaan Aset – Kelompok 10 (Revisi).
-- Project_Akhir_Web_16_Tim.xlsx, khususnya ketentuan Tim 10.
-- Technical_Requirements.md.
-
-Dokumen pendukung:
-- `analisis-kebutuhan.md`
-- `pembagian-tugas.md`
-- `timeline.md`
-- `rancangan-database.md`
-- `desain-ui.md`
-- ERD database
-- Desain UI/UX Figma
-
----
-
-**Status PRD:** Draft untuk validasi dan persetujuan internal kelompok. Perubahan kebutuhan harus disepakati oleh PM, FE, dan BE sebelum diterapkan pada implementasi sistem.
+**Status PRD:** Draft revisi untuk validasi internal kelompok. Skema database aktual Supabase tetap menjadi sumber pemeriksaan sebelum migration; PRD tidak menginstruksikan reset atau pembuatan ulang database.
