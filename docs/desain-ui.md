@@ -17,13 +17,35 @@ Prinsip desain:
 - Mendukung desktop, tablet, dan mobile.
 
 ## 2. Identitas visual
-Gunakan palet desain yang telah disepakati:
-- Deep Navy: `#0D2B45`
-- Warm Beige: `#F2E5CB`
-- Muted Sage: `#D3D3C2`
-- Earth Brown: `#91613E`
 
-Gunakan warna secara konsisten untuk navigasi, tombol utama, latar, kartu, dan status. Status tidak hanya dibedakan dengan warna; sertakan label teks agar mudah dipahami.
+> [!IMPORTANT]
+> **Penyelarasan Palet Figma & Prototipe:** Berdasarkan pemeriksaan dokumen prototipe interaktif `Desain UI Penyewaan Aset — Kelompok 10.html` dan `SewaAset_12_Halaman_Figma.html`, palet resmi yang digunakan pada antarmuka prototipe adalah skema **Teal & Amber (Komplementer 60-30-10)** dengan tipografi **Plus Jakarta Sans**. Palet Deep Navy/Warm Beige pada draf sebelumnya dicatat sebagai draf konseptual awal.
+
+### 2.1 Palet Warna Utama (60-30-10)
+1. **Warna Utama / Dominan (30%):**
+   - **Teal 700 (`#0A4A56`):** Header bar atas (navbar), judul utama, hero banner gradient, hover state.
+   - **Teal 600 (`#0E6B7A`):** Tombol utama (Primary Button), tautan, angka KPI dashboard, border fokus sekunder.
+   - **Teal 100 (`#D7EDF0`):** Latar estimasi biaya, thumbnail aset, kontainer informatif.
+2. **Aksen Komplementer (10%):**
+   - **Amber 500 (`#F2A33A`):** Call-to-Action (CTA) krusial: "Jelajahi Katalog", "Ajukan Sewa", "Daftar Akun", "Simpan Pengembalian", "Setujui Pengajuan", logo badge. Warna teks di atas amber adalah `#16222B`.
+3. **Netral (60%):**
+   - **Latar Belakang Aplikasi (`#F4F7F9` / `#EEF2F5`):** Background utama seluruh halaman.
+   - **Permukaan (`#FFFFFF`):** Background kartu (Card), tabel, formulir input, modal dialog.
+   - **Garis Pembatas (`#D9E1E7`):** Border kartu, separator tabel, divider.
+   - **Teks Utama (`#16222B`):** Heading, teks konten, label input (kontras tinggi WCAG AA > 7:1).
+   - **Teks Samar (`#5A6B78`):** Subtitle, metadata, caption, keterangan bantuan.
+
+### 2.2 Status Badges
+Status tidak hanya mengandalkan warna, melainkan selalu disertai teks label eksplisit:
+- **Tersedia / Disetujui / Dikembalikan / Baik (Sukses):** Latar `#DFF3E8`, teks `#17633C`.
+- **Dipesan / Menunggu Persetujuan / Perlu Pemeriksaan (Peringatan):** Latar `#FFF0CC`, teks `#7A5200`.
+- **Sedang Disewa / Serah Terima (Informasi):** Latar `#DCE9F8`, teks `#1F4F8F`.
+- **Ditolak / Rusak (Bahaya):** Latar `#FADCDC`, teks `#9C2222`.
+- **Dalam Perawatan (Netral):** Latar `#E6EAEE`, teks `#3F4C57`.
+
+### 2.3 Tipografi & Logo
+- **Font Family:** `Plus Jakarta Sans`, sans-serif (Weights: 400 Reguler, 500 Medium, 600 SemiBold, 700 Bold, 800 ExtraBold).
+- **Brand / Identitas Visual:** `▣ SewaAset` (Ikon kubus `▣` di dalam rounded box Amber `#F2A33A`).
 
 ## 3. Role dan aturan akses UI
 ### 3.1 Publik
