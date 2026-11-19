@@ -947,7 +947,7 @@ export async function getAdminRentalApplicationById(id) {
           full_name,
           phone,
           address,
-          verifications:user_verifications(status, document_type)
+          verifications:user_verifications!user_verifications_user_id_fkey(status, document_type)
         ),
         processor:profiles!rental_transactions_processed_by_fkey(full_name),
         items:rental_transaction_items(
