@@ -1,6 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 // Ambil daftar aset dengan filter pencarian, kategori, lokasi, dan harga
+// Menggunakan service client agar RLS tidak memblokir query katalog publik.
 export async function getAssets({
   search = "",
   categoryId = "",
@@ -9,11 +10,18 @@ export async function getAssets({
   maxPrice = 0,
   operationalStatus = "siap",
 } = {}) {
+  const isLiveDb =
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
+
+  if (!isLiveDb) {
+    return filterMockAssets({ search, categoryId, location, minPrice, maxPrice });
+  }
+
   try {
-    const supabase = await createClient();
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
-      return filterMockAssets({ search, categoryId, location, minPrice, maxPrice });
-    }
+    // Gunakan service client agar RLS tidak memblokir pembaca yang belum login.
+    // Tabel katalog (assets, asset_rates, asset_photos) bersifat publik read-only.
+    const supabase = createServiceClient();
 
     let query = supabase
       .from("assets")
@@ -27,11 +35,13 @@ export async function getAssets({
         location,
         physical_condition,
         operational_status,
+        is_active,
         category:asset_categories(id, name),
         rates:asset_rates(id, amount, rate_period, is_active),
         photos:asset_photos(storage_path, is_primary, sort_order)
       `)
-      .eq("operational_status", operationalStatus);
+      .eq("operational_status", operationalStatus)
+      .eq("is_active", true);
 
     if (categoryId) {
       query = query.eq("category_id", categoryId);
@@ -47,8 +57,13 @@ export async function getAssets({
 
     const { data, error } = await query;
 
-    if (error || !data || data.length === 0) {
-      return filterMockAssets({ search, categoryId, location, minPrice, maxPrice });
+    if (error) {
+      console.error("getAssets error:", error.message);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
     }
 
     let results = data.map(formatAssetRow);
@@ -62,7 +77,8 @@ export async function getAssets({
 
     return results;
   } catch (err) {
-    return filterMockAssets({ search, categoryId, location, minPrice, maxPrice });
+    console.error("getAssets exception:", err);
+    return [];
   }
 }
 
@@ -73,13 +89,19 @@ export async function getPopularAssets(limit = 3) {
 }
 
 // Ambil detail aset tunggal berdasarkan ID atau Kode
+// Menggunakan service client agar halaman detail aset bisa diakses publik.
 export async function getAssetById(id) {
+  const isLiveDb =
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
+
+  if (!isLiveDb) {
+    const mock = getMockAssetsList().find((a) => a.id === id || a.code === id);
+    return mock || null;
+  }
+
   try {
-    const supabase = await createClient();
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
-      const mock = getMockAssetsList().find((a) => a.id === id || a.code === id);
-      return mock || null;
-    }
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from("assets")
@@ -94,6 +116,7 @@ export async function getAssetById(id) {
         specifications,
         physical_condition,
         operational_status,
+        is_active,
         category:asset_categories(id, name, description),
         rates:asset_rates(id, amount, rate_period, is_active, effective_from, effective_until),
         photos:asset_photos(id, storage_path, alt_text, is_primary, sort_order)
@@ -102,24 +125,29 @@ export async function getAssetById(id) {
       .maybeSingle();
 
     if (error || !data) {
-      const mock = getMockAssetsList().find((a) => a.id === id || a.code === id);
-      return mock || null;
+      console.error("getAssetById error:", error?.message, "id:", id);
+      return null;
     }
 
     return formatAssetDetailRow(data);
-  } catch {
-    const mock = getMockAssetsList().find((a) => a.id === id || a.code === id);
-    return mock || null;
+  } catch (err) {
+    console.error("getAssetById exception:", err);
+    return null;
   }
 }
 
 // Ambil semua kategori aset yang aktif
 export async function getAssetCategories() {
+  const isLiveDb =
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
+
+  if (!isLiveDb) {
+    return getMockCategories();
+  }
+
   try {
-    const supabase = await createClient();
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
-      return getMockCategories();
-    }
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from("asset_categories")
@@ -127,23 +155,30 @@ export async function getAssetCategories() {
       .eq("is_active", true)
       .order("name");
 
-    if (error || !data || data.length === 0) {
-      return getMockCategories();
+    if (error) {
+      console.error("getAssetCategories error:", error.message);
+      return [];
     }
 
-    return data;
-  } catch {
-    return getMockCategories();
+    return data || [];
+  } catch (err) {
+    console.error("getAssetCategories exception:", err);
+    return [];
   }
 }
 
 // Ambil blok jadwal yang sedang aktif untuk sebuah aset
 export async function getAssetBookingBlocks(assetId) {
+  const isLiveDb =
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
+
+  if (!isLiveDb) {
+    return getMockBookingBlocks(assetId);
+  }
+
   try {
-    const supabase = await createClient();
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
-      return getMockBookingBlocks(assetId);
-    }
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from("asset_booking_blocks")
@@ -151,9 +186,12 @@ export async function getAssetBookingBlocks(assetId) {
       .eq("asset_id", assetId)
       .eq("status", "active");
 
-    if (error || !data) {
-      return getMockBookingBlocks(assetId);
+    if (error) {
+      console.error("getAssetBookingBlocks error:", error.message);
+      return [];
     }
+
+    if (!data) return [];
 
     // Format parse daterange PostgreSQL e.g. "[2026-11-10,2026-11-14)"
     return data.map((b) => {
@@ -173,8 +211,9 @@ export async function getAssetBookingBlocks(assetId) {
         status: b.status,
       };
     });
-  } catch {
-    return getMockBookingBlocks(assetId);
+  } catch (err) {
+    console.error("getAssetBookingBlocks exception:", err);
+    return [];
   }
 }
 
