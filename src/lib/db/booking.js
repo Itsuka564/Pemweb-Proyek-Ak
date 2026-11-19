@@ -64,8 +64,11 @@ export async function checkAssetsAvailability(assetIds, startDateStr, endDateStr
 
     if (error) {
       console.error("Gagal memeriksa booking blocks:", error.message);
-      // Fallback query eksplisit bila filter 'ov' memerlukan query rpc/custom
-      return { available: true };
+      // Jika query gagal, tolak demi keamanan (mencegah double-booking).
+      return {
+        available: false,
+        reason: "Gagal memeriksa ketersediaan aset. Silakan coba kembali nanti.",
+      };
     }
 
     if (conflicts && conflicts.length > 0) {
@@ -79,7 +82,11 @@ export async function checkAssetsAvailability(assetIds, startDateStr, endDateStr
     return { available: true };
   } catch (err) {
     console.error("Error availability check:", err);
-    return { available: true };
+    // Jika terjadi exception, tolak demi keamanan (mencegah double-booking).
+    return {
+      available: false,
+      reason: "Terjadi kesalahan saat memeriksa ketersediaan aset. Silakan coba kembali nanti.",
+    };
   }
 }
 
@@ -184,6 +191,10 @@ export async function createRentalSubmission({
 
   if (itemsError) {
     console.error("Gagal menyimpan transaction items:", itemsError.message);
+    // Rollback: hapus header yang sudah tersimpan agar tidak terjadi orphan record.
+    // rental_transaction_items memiliki ON DELETE CASCADE sehingga aman.
+    await supabase.from("rental_transactions").delete().eq("id", header.id);
+    throw new Error(`Gagal menyimpan detail aset penyewaan: ${itemsError.message}`);
   }
 
   // 5. Catat riwayat status ke rental_status_history
