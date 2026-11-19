@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 import { createRentalSubmission, checkAssetsAvailability } from "@/lib/db/booking";
 import { getAssetById } from "@/lib/db/assets";
 import { redirect } from "next/navigation";
@@ -81,6 +82,10 @@ export async function submitRentalAction(prevState, formData) {
     if (!result?.success) {
       return { error: "Gagal membuat pengajuan penyewaan." };
     }
+
+    // Revalidasi data dashboard dan riwayat penyewa
+    revalidatePath("/penyewa/dashboard");
+    revalidatePath("/penyewa/riwayat");
 
     // Redirect ke halaman detail transaksi penyewa
     redirect(`/penyewa/transaksi/${result.transactionId}?status=submitted`);

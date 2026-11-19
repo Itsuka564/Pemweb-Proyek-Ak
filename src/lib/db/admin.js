@@ -601,12 +601,16 @@ export async function updateAsset(
   };
 
   if (physicalCondition) {
-    payload.condition = physicalCondition;
+    // Hanya perbarui kolom legacy 'condition' jika nilainya 'baik' agar tidak memicu constraint check lama
+    if (physicalCondition === "baik") {
+      payload.condition = "baik";
+    }
   }
   if (operationalStatus) {
-    payload.availability = operationalStatus === "siap" ? "tersedia" : "tidak_tersedia";
+    // Enum asset_availability valid: 'tersedia', 'dalam_perawatan', 'sedang_disewa', 'dipesan'
+    payload.availability = operationalStatus === "siap" ? "tersedia" : "dalam_perawatan";
   }
-  if (dailyRate !== undefined && dailyRate !== null) {
+  if (dailyRate !== undefined && dailyRate !== null && !isNaN(Number(dailyRate))) {
     payload.daily_rate = Number(dailyRate);
   }
 
@@ -624,6 +628,20 @@ export async function updateAsset(
 
   if (error) {
     throw new Error(`Gagal memperbarui aset: ${error.message}`);
+  }
+
+  // Sinkronisasi tarif harian ke tabel asset_rates jika ada perubahan nominal
+  if (dailyRate !== undefined && dailyRate !== null && !isNaN(Number(dailyRate))) {
+    try {
+      await upsertAssetRate({
+        assetId: id,
+        ratePeriod: "harian",
+        amount: Number(dailyRate),
+        effectiveFrom: new Date().toISOString().slice(0, 10),
+      });
+    } catch (e) {
+      console.warn("Catatan sinkronisasi asset_rates:", e?.message);
+    }
   }
 
   return { success: true, id };

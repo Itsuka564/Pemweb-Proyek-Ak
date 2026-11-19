@@ -51,7 +51,7 @@ export default function EditAssetForm({ asset, categories = [] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Select
           label="Kategori Aset *"
           name="categoryId"
@@ -65,6 +65,14 @@ export default function EditAssetForm({ asset, categories = [] }) {
             </option>
           ))}
         </Select>
+
+        <Input
+          label="Tarif Harian (Rp) *"
+          name="dailyRate"
+          type="number"
+          defaultValue={asset.dailyRate || ""}
+          required
+        />
 
         <Input
           label="Luas / Kapasitas"

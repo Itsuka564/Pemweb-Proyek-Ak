@@ -24,7 +24,7 @@ async function getSupabaseForPayment() {
  * Membuat transaksi pembayaran Midtrans untuk transaksi sewa yang berstatus 'menunggu_pembayaran'.
  * Mewajibkan autentikasi dan memvalidasi wewenang (pemilik transaksi atau admin).
  */
-export async function createPaymentForTransaction(transactionId, userId) {
+export async function createPaymentForTransaction(transactionId, userId, userEmail = null) {
   if (!transactionId) {
     throw new Error("ID Transaksi wajib disertakan.");
   }
@@ -45,7 +45,7 @@ export async function createPaymentForTransaction(transactionId, userId) {
       status,
       total_cost,
       payment_due_at,
-      renter:profiles!rental_transactions_renter_id_fkey(id, full_name, phone, email),
+      renter:profiles!rental_transactions_renter_id_fkey(id, full_name, phone, address),
       items:rental_transaction_items(
         id,
         line_total,
@@ -140,7 +140,7 @@ export async function createPaymentForTransaction(transactionId, userId) {
     customerDetails: {
       fullName: tx.renter?.full_name,
       phone: tx.renter?.phone,
-      email: tx.renter?.email,
+      email: userEmail || undefined,
     },
     itemDetails,
   });

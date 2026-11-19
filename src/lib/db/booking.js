@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/server.js";
+import { createAdminClient } from "../supabase/admin.js";
 import { getRentalSettings } from "./settings.js";
 import { calculateRentalDays, calculateBlockedRange, calculateMultiAssetCost } from "../utils/booking-calc.js";
 
@@ -129,7 +130,9 @@ export async function createRentalSubmission({
   const totalCost = subtotal;
   const transactionCode = `SWA-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-  const supabase = await createClient();
+  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createAdminClient()
+    : await createClient();
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
     // Mode demo / mockup persisten lokal
@@ -143,11 +146,14 @@ export async function createRentalSubmission({
   }
 
   // 3. Simpan header transaksi ke rental_transactions
+  const primaryItem = processedItems[0];
   const { data: header, error: headerError } = await supabase
     .from("rental_transactions")
     .insert({
       transaction_code: transactionCode,
       renter_id: renterId,
+      asset_id: primaryItem?.asset_id || null,
+      daily_rate: primaryItem?.rate_amount_snapshot || null,
       start_date: startDate,
       end_date: endDate,
       rental_days: rentalDays,

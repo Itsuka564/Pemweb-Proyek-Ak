@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function submitVerificationAction(prevState, formData) {
   const supabase = await createClient();
@@ -82,8 +83,11 @@ export async function submitVerificationAction(prevState, formData) {
     }
 
     revalidatePath("/penyewa/verifikasi");
-    return { success: "Berkas berhasil dikirim dan sedang menunggu peninjauan Admin." };
+    redirect("/penyewa/verifikasi?submitted=true");
   } catch (err) {
+    if (err.message === "NEXT_REDIRECT" || err?.digest?.startsWith?.("NEXT_REDIRECT")) {
+      throw err;
+    }
     return { error: err.message || "Terjadi kesalahan saat memproses berkas." };
   }
 }

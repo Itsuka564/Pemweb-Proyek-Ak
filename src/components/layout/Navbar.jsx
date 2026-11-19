@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 function NavLinksList({ role, user }) {
   const pathname = usePathname();
@@ -59,70 +59,18 @@ function NavLinksFallback() {
 }
 
 export default function Navbar({
-  user = null,
-  role = null,
-  profile = null,
+  user: propUser = null,
+  role: propRole = null,
+  profile: propProfile = null,
   onSignOut,
 }) {
-  const [currentUser, setCurrentUser] = useState(user);
-  const [currentRole, setCurrentRole] = useState(role);
-  const [currentProfile, setCurrentProfile] = useState(profile);
+  const auth = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      setCurrentUser(user);
-      setCurrentRole(role);
-      setCurrentProfile(profile);
-      return;
-    }
-
-    try {
-      const supabase = createClient();
-      let isMounted = true;
-
-      const fetchProfileForUser = async (userId) => {
-        const { data: p } = await supabase
-          .from("profiles")
-          .select("id, full_name, role, phone")
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (p && isMounted) {
-          setCurrentProfile(p);
-          setCurrentRole(p.role);
-        }
-      };
-
-      supabase.auth.getUser().then(({ data }) => {
-        const authUser = data?.user;
-        if (authUser && isMounted) {
-          setCurrentUser(authUser);
-          fetchProfileForUser(authUser.id);
-        }
-      });
-
-      const { data: authListener } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          if (!isMounted) return;
-          if (session?.user) {
-            setCurrentUser(session.user);
-            fetchProfileForUser(session.user.id);
-          } else if (event === "SIGNED_OUT") {
-            setCurrentUser(null);
-            setCurrentRole(null);
-            setCurrentProfile(null);
-          }
-        }
-      );
-
-      return () => {
-        isMounted = false;
-        authListener?.subscription?.unsubscribe();
-      };
-    } catch {
-      // fallback jika client offline
-    }
-  }, [user, role, profile]);
+  // Ambil state dari context AuthProvider yang persisten di root layout,
+  // dengan fallback ke props jika dipasok secara eksplisit
+  const currentUser = propUser || auth?.user || null;
+  const currentRole = propRole || auth?.role || null;
+  const currentProfile = propProfile || auth?.profile || null;
 
   return (
     <header className="sticky top-0 z-40 bg-[#0a4a56] text-white shadow-md">
