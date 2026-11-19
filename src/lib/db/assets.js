@@ -218,9 +218,21 @@ export async function getAssetBookingBlocks(assetId) {
 }
 
 // Helpers
+const SUPABASE_STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
+
+/** Konversi storage_path dari asset_photos ke URL publik Supabase Storage */
+function toPhotoUrl(storagePath) {
+  if (!storagePath) return null;
+  if (storagePath.startsWith("http")) return storagePath;
+  return `${SUPABASE_STORAGE_URL}/asset-photos/${storagePath}`;
+}
+
 function formatAssetRow(asset) {
   const activeRate = asset.rates?.find((r) => r.rate_period === "harian" && r.is_active)?.amount || 100000;
-  const primaryPhoto = asset.photos?.find((p) => p.is_primary)?.storage_path || asset.photos?.[0]?.storage_path || null;
+  const primaryStoragePath =
+    asset.photos?.find((p) => p.is_primary)?.storage_path ||
+    asset.photos?.[0]?.storage_path ||
+    null;
 
   return {
     id: asset.id,
@@ -234,8 +246,11 @@ function formatAssetRow(asset) {
     dailyRate: Number(activeRate),
     condition: asset.physical_condition || "baik",
     status: asset.operational_status || "siap",
-    photo: primaryPhoto,
-    photos: asset.photos || [],
+    photo: toPhotoUrl(primaryStoragePath),
+    photos: (asset.photos || []).map((p) => ({
+      ...p,
+      url: toPhotoUrl(p.storage_path),
+    })),
   };
 }
 
@@ -263,7 +278,10 @@ function formatAssetDetailRow(asset) {
     monthlyRate: monthlyRate ? Number(monthlyRate) : null,
     yearlyRate: yearlyRate ? Number(yearlyRate) : null,
     rates: rates,
-    photos: asset.photos || [],
+    photos: (asset.photos || []).map((p) => ({
+      ...p,
+      url: toPhotoUrl(p.storage_path),
+    })),
   };
 }
 
