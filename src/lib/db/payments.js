@@ -73,7 +73,7 @@ export async function createPaymentForTransaction(transactionId, userId, userEma
     }
   }
 
-  if (tx.status !== "menunggu_pembayaran") {
+  if (tx.status !== "disetujui" && tx.status !== "menunggu_pembayaran") {
     throw new Error(`Transaksi tidak dapat dibayar karena berstatus '${tx.status}'.`);
   }
 

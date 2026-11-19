@@ -121,7 +121,7 @@ async function TransactionDetailContent({ paramsPromise, searchParamsPromise }) 
             {tx.status === "menunggu_persetujuan" && (
               <span>⏳ Menunggu verifikasi kelayakan & persetujuan dari Admin.</span>
             )}
-            {tx.status === "menunggu_pembayaran" && (
+            {(tx.status === "disetujui" || tx.status === "menunggu_pembayaran") && (
               <span>
                 ⚠️ Disetujui! Segera selesaikan pembayaran sebelum{" "}
                 <strong className="text-[#9c2222]">
@@ -141,7 +141,7 @@ async function TransactionDetailContent({ paramsPromise, searchParamsPromise }) 
           </div>
 
           <div className="flex items-center gap-2">
-            {tx.status === "menunggu_pembayaran" && (
+            {(tx.status === "disetujui" || tx.status === "menunggu_pembayaran") && (
               <Link href={`/penyewa/pembayaran/${tx.id}`}>
                 <Button variant="accent" size="sm">
                   Bayar Sekarang →

@@ -1066,7 +1066,7 @@ export async function approveRentalApplication({
   note = "Pengajuan sewa telah disetujui. Silakan lanjutkan pembayaran.",
 }) {
   if (!isLiveSupabase()) {
-    return { success: true, transactionId, status: "menunggu_pembayaran" };
+    return { success: true, transactionId, status: "disetujui" };
   }
 
   const supabase = await getSupabaseForAdmin();
@@ -1125,11 +1125,12 @@ export async function approveRentalApplication({
   const paymentDueAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
   const now = new Date().toISOString();
 
+
   // 5. Update transaksi status
   const { error: updateError } = await supabase
     .from("rental_transactions")
     .update({
-      status: "menunggu_pembayaran",
+      status: "disetujui",
       decision_note: note,
       processed_by: adminId,
       processed_at: now,
@@ -1141,7 +1142,6 @@ export async function approveRentalApplication({
   if (updateError) {
     throw new Error(`Gagal memperbarui transaksi: ${updateError.message}`);
   }
-
   // 6. Insert ke rental_reviews
   await supabase.from("rental_reviews").insert({
     transaction_id: transactionId,
@@ -1155,7 +1155,7 @@ export async function approveRentalApplication({
   await supabase.from("rental_status_history").insert({
     rental_id: transactionId,
     old_status: "menunggu_persetujuan",
-    new_status: "menunggu_pembayaran",
+    new_status: "disetujui",
     changed_by: adminId,
     change_note: note,
     changed_at: now,
@@ -1183,7 +1183,7 @@ export async function approveRentalApplication({
     }
   }
 
-  return { success: true, transactionId, status: "menunggu_pembayaran", paymentDueAt };
+  return { success: true, transactionId, status: "disetujui", paymentDueAt };
 }
 
 /**
