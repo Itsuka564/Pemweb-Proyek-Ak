@@ -34,10 +34,22 @@ async function VerificationContent({ searchParams }) {
     verification = v;
   }
 
-  const notice = (await searchParams)?.notice;
+  const sp = await searchParams;
+  const notice = sp?.notice;
+  const submitted = sp?.submitted;
 
   return (
     <>
+      {submitted === "true" && (
+        <div className="p-4 rounded-xl bg-[#dff3e8] border border-[#b8e4cd] text-xs text-[#17633c] flex items-center gap-3">
+          <span className="text-xl">✅</span>
+          <div>
+            <p className="font-bold">Berkas Identitas Berhasil Terkirim</p>
+            <p>Dokumen Anda telah tersimpan dan sedang menunggu peninjauan serta verifikasi oleh Admin.</p>
+          </div>
+        </div>
+      )}
+
       {notice === "verification_required" && (
         <div className="p-4 rounded-xl bg-[#fff0cc] border border-[#fde199] text-xs text-[#7a5200] flex items-center gap-3">
           <span className="text-xl">⚠️</span>

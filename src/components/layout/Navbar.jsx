@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 function NavLinksList({ role, user }) {
   const pathname = usePathname();
@@ -35,6 +35,7 @@ function NavLinksList({ role, user }) {
           <Link
             key={link.href}
             href={link.href}
+            prefetch={false}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
               isActive
                 ? "bg-[#0e6b7a] text-white"
@@ -52,77 +53,44 @@ function NavLinksList({ role, user }) {
 function NavLinksFallback() {
   return (
     <nav className="hidden md:flex items-center gap-1.5 text-xs text-[#d7edf0]">
-      <Link href="/" className="px-3.5 py-1.5">Beranda</Link>
-      <Link href="/katalog" className="px-3.5 py-1.5">Katalog Aset</Link>
+      <Link href="/" prefetch={false} className="px-3.5 py-1.5">Beranda</Link>
+      <Link href="/katalog" prefetch={false} className="px-3.5 py-1.5">Katalog Aset</Link>
     </nav>
   );
 }
 
 export default function Navbar({
-  user = null,
-  role = null,
-  profile = null,
+  user: propUser = null,
+  role: propRole = null,
+  profile: propProfile = null,
   onSignOut,
 }) {
-  const [currentUser, setCurrentUser] = useState(user);
-  const [currentRole, setCurrentRole] = useState(role);
-  const [currentProfile, setCurrentProfile] = useState(profile);
+  const auth = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setCurrentUser(user);
-      setCurrentRole(role);
-      setCurrentProfile(profile);
-      return;
-    }
+  // Ambil state dari context AuthProvider yang persisten di root layout,
+  // dengan fallback ke props jika dipasok secara eksplisit
+  const currentUser = propUser || auth?.user || null;
+  const currentRole = propRole || auth?.role || null;
+  const currentProfile = propProfile || auth?.profile || null;
 
+  const handleSignOut = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
     try {
-      const supabase = createClient();
-      let isMounted = true;
-
-      const fetchProfileForUser = async (userId) => {
-        const { data: p } = await supabase
-          .from("profiles")
-          .select("id, full_name, role, phone")
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (p && isMounted) {
-          setCurrentProfile(p);
-          setCurrentRole(p.role);
-        }
-      };
-
-      supabase.auth.getUser().then(({ data }) => {
-        const authUser = data?.user;
-        if (authUser && isMounted) {
-          setCurrentUser(authUser);
-          fetchProfileForUser(authUser.id);
-        }
-      });
-
-      const { data: authListener } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          if (!isMounted) return;
-          if (session?.user) {
-            setCurrentUser(session.user);
-            fetchProfileForUser(session.user.id);
-          } else if (event === "SIGNED_OUT") {
-            setCurrentUser(null);
-            setCurrentRole(null);
-            setCurrentProfile(null);
-          }
-        }
-      );
-
-      return () => {
-        isMounted = false;
-        authListener?.subscription?.unsubscribe();
-      };
+      if (onSignOut) {
+        await onSignOut();
+      } else if (auth?.signOut) {
+        await auth.signOut();
+      } else {
+        window.location.href = "/auth/keluar";
+      }
     } catch {
-      // fallback jika client offline
+      window.location.href = "/";
+    } finally {
+      setIsLoggingOut(false);
     }
-  }, [user, role, profile]);
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-[#0a4a56] text-white shadow-md">
@@ -163,26 +131,15 @@ export default function Navbar({
                     {currentRole ? currentRole.toUpperCase() : "PENYEWA"}
                   </Badge>
                 </div>
-                {onSignOut ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onSignOut}
-                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                  >
-                    Keluar
-                  </Button>
-                ) : (
-                  <Link href="/auth/keluar">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                    >
-                      Keluar
-                    </Button>
-                  </Link>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  disabled={isLoggingOut}
+                  className="bg-white/10 text-white border-white/20 hover:bg-white/20 cursor-pointer"
+                >
+                  {isLoggingOut ? "Keluar..." : "Keluar"}
+                </Button>
               </div>
             ) : (
               <div className="flex items-center gap-2">

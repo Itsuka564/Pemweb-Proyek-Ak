@@ -31,7 +31,7 @@ async function OfficerTaskDetailContent({ paramsPromise }) {
     });
   };
 
-  const isHandoverReady = task.status === "dibayar";
+  const isHandoverReady = task.status === "disetujui" || task.status === "dibayar";
   const isReturnReady = task.status === "sedang_disewa";
   const isCompleted = task.status === "dikembalikan" || task.status === "selesai";
 

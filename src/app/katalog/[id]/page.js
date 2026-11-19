@@ -46,14 +46,14 @@ async function AssetDetailContent({ paramsPromise }) {
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-white border border-[#d9e1e7] rounded-2xl overflow-hidden shadow-xs">
           <div className="h-72 sm:h-96 bg-[#d7edf0] flex items-center justify-center text-8xl relative overflow-hidden">
-            {asset.photos?.[0]?.storage_path && asset.photos[0].storage_path.startsWith("http") ? (
+            {asset.photos?.[0]?.url ? (
               <img
-                src={asset.photos[0].storage_path}
-                alt={asset.name}
+                src={asset.photos[0].url}
+                alt={asset.photos[0].alt_text || asset.name}
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span>{asset.icon || "🏢"}</span>
+              <span>🏢</span>
             )}
             <div className="absolute top-4 left-4 flex gap-2">
               <Badge status={asset.status === "siap" ? "tersedia" : asset.status} />
@@ -68,8 +68,8 @@ async function AssetDetailContent({ paramsPromise }) {
                   key={idx}
                   className="w-20 h-16 rounded-lg bg-[#d7edf0] border border-[#d9e1e7] shrink-0 overflow-hidden"
                 >
-                  {p.storage_path.startsWith("http") ? (
-                    <img src={p.storage_path} alt={p.alt_text} className="w-full h-full object-cover" />
+                  {p.url ? (
+                    <img src={p.url} alt={p.alt_text || asset.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full grid place-items-center text-xl">🖼️</div>
                   )}

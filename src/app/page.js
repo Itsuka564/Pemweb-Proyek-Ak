@@ -23,8 +23,16 @@ async function PopularAssetsList() {
       {assets.map((asset) => (
         <Card key={asset.id} className="hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="h-40 rounded-lg bg-[#d7edf0] flex items-center justify-center text-5xl">
-              {asset.icon || "🏢"}
+            <div className="h-40 rounded-lg bg-[#d7edf0] flex items-center justify-center text-5xl overflow-hidden">
+              {asset.photo ? (
+                <img
+                  src={asset.photo}
+                  alt={asset.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>🏢</span>
+              )}
             </div>
 
             <div>
@@ -47,7 +55,7 @@ async function PopularAssetsList() {
                   <span className="text-xs font-normal text-[#5a6b78]"> / hari</span>
                 </p>
               </div>
-              <Link href="/katalog">
+              <Link href={`/katalog/${asset.id}`}>
                 <Button variant="outline" size="sm">
                   Detail
                 </Button>

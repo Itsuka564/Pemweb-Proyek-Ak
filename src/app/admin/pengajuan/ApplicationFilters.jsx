@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 const STATUS_OPTIONS = [
   { label: "Semua Status", value: "semua" },
   { label: "Menunggu Persetujuan", value: "menunggu_persetujuan" },
-  { label: "Menunggu Pembayaran", value: "menunggu_pembayaran" },
+  { label: "Disetujui", value: "disetujui" },
   { label: "Dibayar", value: "dibayar" },
   { label: "Sedang Disewa", value: "sedang_disewa" },
   { label: "Selesai", value: "selesai" },

@@ -23,7 +23,7 @@ export async function initiatePaymentAction(transactionId) {
   }
 
   try {
-    const payment = await createPaymentForTransaction(transactionId, user.id);
+    const payment = await createPaymentForTransaction(transactionId, user.id, user.email);
 
     revalidatePath(`/penyewa/transaksi/${transactionId}`);
     revalidatePath(`/penyewa/pembayaran/${transactionId}`);

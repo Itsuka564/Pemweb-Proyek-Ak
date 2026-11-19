@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import PaymentCheckoutCard from "./PaymentCheckoutCard";
 import { getTransactionById } from "@/lib/db/transactions";
 import { getPaymentAndContractByRentalId } from "@/lib/db/payments";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Pembayaran Sewa Aset (Midtrans) — Kelompok 10",
@@ -15,12 +16,30 @@ export const metadata = {
 
 async function PaymentContent({ paramsPromise }) {
   const { id } = await paramsPromise;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/masuk?redirect=/penyewa/pembayaran/${id}`);
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const isAdmin = profile?.role === "admin";
+
   const [tx, paymentInfo] = await Promise.all([
-    getTransactionById(id),
+    getTransactionById(id, isAdmin ? null : user.id),
     getPaymentAndContractByRentalId(id),
   ]);
 
-  if (!tx) {
+  if (!tx || (!isAdmin && tx.renterId !== user.id)) {
     notFound();
   }
 

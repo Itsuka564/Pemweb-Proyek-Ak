@@ -31,11 +31,11 @@ export async function getOfficerDashboardStats(officerId = null) {
   try {
     const supabase = await getSupabaseForOfficer();
 
-    // Query antrean serah terima (status: dibayar)
+    // Query antrean serah terima (status: disetujui)
     const { count: pendingHandovers } = await supabase
       .from("rental_transactions")
       .select("*", { count: "exact", head: true })
-      .eq("status", "dibayar");
+      .eq("status", "disetujui");
 
     // Query antrean pengembalian (status: sedang_disewa)
     const { count: pendingReturns } = await supabase
@@ -43,11 +43,11 @@ export async function getOfficerDashboardStats(officerId = null) {
       .select("*", { count: "exact", head: true })
       .eq("status", "sedang_disewa");
 
-    // Query tugas selesai (status: dikembalikan / selesai)
+    // Query tugas selesai (status: dikembalikan)
     const { count: completedTasks } = await supabase
       .from("rental_transactions")
       .select("*", { count: "exact", head: true })
-      .in("status", ["dikembalikan", "selesai"]);
+      .eq("status", "dikembalikan");
 
     // Ambil tugas mendesak terbaru
     const { data: urgentTasks } = await supabase
@@ -66,7 +66,7 @@ export async function getOfficerDashboardStats(officerId = null) {
         ),
         assignments:rental_staff_assignments(staff_id)
       `)
-      .in("status", ["dibayar", "sedang_disewa"])
+      .in("status", ["disetujui", "sedang_disewa"])
       .order("start_date", { ascending: true })
       .limit(6);
 
@@ -84,7 +84,7 @@ export async function getOfficerDashboardStats(officerId = null) {
         startDate: t.start_date,
         endDate: t.end_date,
         rentalDays: t.rental_days || 1,
-        isHandoverPending: t.status === "dibayar",
+        isHandoverPending: t.status === "disetujui" || t.status === "dibayar",
         isReturnPending: t.status === "sedang_disewa",
       };
     });
@@ -141,14 +141,14 @@ export async function getOfficerTasks({
 
     // Filter status operasional petugas
     if (statusFilter === "serah_terima") {
-      query = query.eq("status", "dibayar");
+      query = query.in("status", ["disetujui", "dibayar"]);
     } else if (statusFilter === "pengembalian") {
       query = query.eq("status", "sedang_disewa");
     } else if (statusFilter === "selesai") {
-      query = query.in("status", ["dikembalikan", "selesai"]);
+      query = query.in("status", ["dikembalikan"]);
     } else {
       // Semua tugas operasional
-      query = query.in("status", ["dibayar", "sedang_disewa", "dikembalikan", "selesai"]);
+      query = query.in("status", ["disetujui", "sedang_disewa", "dikembalikan"]);
     }
 
     const { data, error } = await query;
