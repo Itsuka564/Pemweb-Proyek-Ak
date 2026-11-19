@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Badge from "@/components/ui/Badge";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const OFFICER_NAV_ITEMS = [
   {
@@ -20,6 +22,24 @@ const OFFICER_NAV_ITEMS = [
 
 export default function OfficerSidebar({ userProfile, pendingCounts = {} }) {
   const pathname = usePathname();
+  const auth = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleSignOut = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      if (auth?.signOut) {
+        await auth.signOut();
+      } else {
+        window.location.href = "/auth/keluar";
+      }
+    } catch {
+      window.location.href = "/";
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <aside className="w-full md:w-64 bg-[#0a4a56] text-white flex flex-col shrink-0 border-r border-[#0e6b7a]/30">
@@ -129,13 +149,15 @@ export default function OfficerSidebar({ userProfile, pendingCounts = {} }) {
 
       {/* Logout Footer */}
       <div className="p-4 border-t border-white/10">
-        <Link
-          href="/auth/keluar"
-          className="flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-bold text-red-200 hover:text-white bg-red-950/30 hover:bg-red-900/50 border border-red-500/20 rounded-lg transition-colors"
+        <button
+          type="button"
+          onClick={handleSignOut}
+          disabled={isLoggingOut}
+          className="flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-bold text-red-200 hover:text-white bg-red-950/30 hover:bg-red-900/50 border border-red-500/20 rounded-lg transition-colors cursor-pointer"
         >
           <span>🚪</span>
-          <span>Keluar Sesi</span>
-        </Link>
+          <span>{isLoggingOut ? "Mengeluarkan..." : "Keluar Sesi"}</span>
+        </button>
       </div>
     </aside>
   );

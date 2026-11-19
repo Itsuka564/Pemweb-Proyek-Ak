@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Badge from "@/components/ui/Badge";
@@ -35,6 +35,7 @@ function NavLinksList({ role, user }) {
           <Link
             key={link.href}
             href={link.href}
+            prefetch={false}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${
               isActive
                 ? "bg-[#0e6b7a] text-white"
@@ -52,8 +53,8 @@ function NavLinksList({ role, user }) {
 function NavLinksFallback() {
   return (
     <nav className="hidden md:flex items-center gap-1.5 text-xs text-[#d7edf0]">
-      <Link href="/" className="px-3.5 py-1.5">Beranda</Link>
-      <Link href="/katalog" className="px-3.5 py-1.5">Katalog Aset</Link>
+      <Link href="/" prefetch={false} className="px-3.5 py-1.5">Beranda</Link>
+      <Link href="/katalog" prefetch={false} className="px-3.5 py-1.5">Katalog Aset</Link>
     </nav>
   );
 }
@@ -65,12 +66,31 @@ export default function Navbar({
   onSignOut,
 }) {
   const auth = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Ambil state dari context AuthProvider yang persisten di root layout,
   // dengan fallback ke props jika dipasok secara eksplisit
   const currentUser = propUser || auth?.user || null;
   const currentRole = propRole || auth?.role || null;
   const currentProfile = propProfile || auth?.profile || null;
+
+  const handleSignOut = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      if (onSignOut) {
+        await onSignOut();
+      } else if (auth?.signOut) {
+        await auth.signOut();
+      } else {
+        window.location.href = "/auth/keluar";
+      }
+    } catch {
+      window.location.href = "/";
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-[#0a4a56] text-white shadow-md">
@@ -111,26 +131,15 @@ export default function Navbar({
                     {currentRole ? currentRole.toUpperCase() : "PENYEWA"}
                   </Badge>
                 </div>
-                {onSignOut ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onSignOut}
-                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                  >
-                    Keluar
-                  </Button>
-                ) : (
-                  <Link href="/auth/keluar">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                    >
-                      Keluar
-                    </Button>
-                  </Link>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  disabled={isLoggingOut}
+                  className="bg-white/10 text-white border-white/20 hover:bg-white/20 cursor-pointer"
+                >
+                  {isLoggingOut ? "Keluar..." : "Keluar"}
+                </Button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
