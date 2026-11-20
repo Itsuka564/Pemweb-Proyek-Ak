@@ -254,10 +254,13 @@ export async function processMidtransNotification(payload) {
   const eventKey = `${orderId}-${transactionStatus}-${statusCode}`;
 
   // 2. Pemeriksaan Idempotensi melalui tabel payment_webhook_events
+  //    Hanya lewati event yang benar-benar berhasil diproses (processed_at terisi).
+  //    Event yang gagal (processed_at NULL) boleh diproses ulang oleh retry Midtrans.
   const { data: existingEvent } = await supabase
     .from("payment_webhook_events")
     .select("id, processed_at")
     .eq("event_key", eventKey)
+    .not("processed_at", "is", null)
     .maybeSingle();
 
   if (existingEvent) {
@@ -365,72 +368,101 @@ export async function processMidtransNotification(payload) {
   }
 
   // 6. Eksekusi pembaruan basis data
-  // 6a. Catat event webhook untuk audit & idempotensi
-  await supabase.from("payment_webhook_events").insert({
+  // 6a. Catat event webhook untuk audit (tanpa processed_at agar retry aman jika gagal).
+  //     Gunakan upsert agar retry setelah kegagalan meng-update baris yang sama.
+  const { data: webhookEvent } = await supabase.from("payment_webhook_events").upsert({
     payment_id: payment.id,
     event_key: eventKey,
     order_id: orderId,
     transaction_status: transactionStatus,
     payload,
-    processed_at: now,
+    processing_error: null,
     created_at: now,
-  });
+  }, { onConflict: "event_key" }).select("id").single();
 
-  // 6b. Update baris payments
-  const paymentUpdatePayload = {
-    gateway_transaction_status: transactionStatus,
-    gateway_fraud_status: fraudStatus || null,
-    payment_type: paymentType || null,
-    midtrans_transaction_id: transactionId || null,
-    status: newPaymentStatus,
-    gateway_response: payload,
-    updated_at: now,
-  };
-  if (paidAt) {
-    paymentUpdatePayload.paid_at = paidAt;
-  }
-
-  await supabase
-    .from("payments")
-    .update(paymentUpdatePayload)
-    .eq("id", payment.id);
-
-  // 6c. Update status rental_transactions jika berubah
-  if (newRentalStatus && newRentalStatus !== currentRentalStatus) {
-    await supabase
-      .from("rental_transactions")
-      .update({
-        status: newRentalStatus,
-        updated_at: now,
-      })
-      .eq("id", payment.rental_id);
-
-    // Catat jejak audit status di rental_status_history
-    await supabase.from("rental_status_history").insert({
-      rental_id: payment.rental_id,
-      old_status: currentRentalStatus,
-      new_status: newRentalStatus,
-      changed_by: null, // otomatis via webhook sistem
-      change_note: `Pembaruan otomatis webhook Midtrans: ${transactionStatus}. Metode: ${paymentType || "-"}.`,
-      changed_at: now,
-    });
-
-    // 6d. HANYA terbitkan kontrak perjanjian sewa jika pembayaran terverifikasi LUNAS (settlement/capture accept)
-    if (isSettled && newRentalStatus === "dibayar") {
-      await generateContractForTransaction(payment.rental_id);
+  try {
+    // 6b. Update baris payments
+    const paymentUpdatePayload = {
+      gateway_transaction_status: transactionStatus,
+      gateway_fraud_status: fraudStatus || null,
+      payment_type: paymentType || null,
+      midtrans_transaction_id: transactionId || null,
+      status: newPaymentStatus,
+      gateway_response: payload,
+      updated_at: now,
+    };
+    if (paidAt) {
+      paymentUpdatePayload.paid_at = paidAt;
     }
 
-    // 6e. Jika transaksi kedaluwarsa atau dibatalkan, lepaskan blokir kalender aktif
-    if (newRentalStatus === "kedaluwarsa" || newRentalStatus === "dibatalkan") {
-      const itemIds = (payment.rental?.items || []).map((i) => i.id);
-      if (itemIds.length > 0) {
-        await supabase
-          .from("asset_booking_blocks")
-          .update({ status: "released", released_at: now })
-          .in("rental_item_id", itemIds)
-          .eq("status", "active");
+    const { error: paymentUpdateError } = await supabase
+      .from("payments")
+      .update(paymentUpdatePayload)
+      .eq("id", payment.id);
+
+    if (paymentUpdateError) {
+      throw new Error(`Gagal memperbarui status pembayaran: ${paymentUpdateError.message}`);
+    }
+
+    // 6c. Update status rental_transactions jika berubah
+    if (newRentalStatus && newRentalStatus !== currentRentalStatus) {
+      const { error: rentalUpdateError } = await supabase
+        .from("rental_transactions")
+        .update({
+          status: newRentalStatus,
+          updated_at: now,
+        })
+        .eq("id", payment.rental_id);
+
+      if (rentalUpdateError) {
+        throw new Error(`Gagal memperbarui status transaksi sewa: ${rentalUpdateError.message}`);
+      }
+
+      // Catat jejak audit status di rental_status_history
+      await supabase.from("rental_status_history").insert({
+        rental_id: payment.rental_id,
+        old_status: currentRentalStatus,
+        new_status: newRentalStatus,
+        changed_by: null, // otomatis via webhook sistem
+        change_note: `Pembaruan otomatis webhook Midtrans: ${transactionStatus}. Metode: ${paymentType || "-"}.`,
+        changed_at: now,
+      });
+
+      // 6d. HANYA terbitkan kontrak perjanjian sewa jika pembayaran terverifikasi LUNAS (settlement/capture accept)
+      if (isSettled && newRentalStatus === "dibayar") {
+        await generateContractForTransaction(payment.rental_id);
+      }
+
+      // 6e. Jika transaksi kedaluwarsa atau dibatalkan, lepaskan blokir kalender aktif
+      if (newRentalStatus === "kedaluwarsa" || newRentalStatus === "dibatalkan") {
+        const itemIds = (payment.rental?.items || []).map((i) => i.id);
+        if (itemIds.length > 0) {
+          await supabase
+            .from("asset_booking_blocks")
+            .update({ status: "released", released_at: now })
+            .in("rental_item_id", itemIds)
+            .eq("status", "active");
+        }
       }
     }
+
+    // Semua operasi berhasil — tandai event sebagai selesai diproses
+    if (webhookEvent?.id) {
+      await supabase
+        .from("payment_webhook_events")
+        .update({ processed_at: now })
+        .eq("id", webhookEvent.id);
+    }
+  } catch (processingError) {
+    // Operasi DB gagal — catat error di webhook event agar retry Midtrans dapat memproses ulang
+    console.error("Webhook processing error:", processingError.message);
+    if (webhookEvent?.id) {
+      await supabase
+        .from("payment_webhook_events")
+        .update({ processing_error: processingError.message })
+        .eq("id", webhookEvent.id);
+    }
+    throw processingError;
   }
 
   return {
