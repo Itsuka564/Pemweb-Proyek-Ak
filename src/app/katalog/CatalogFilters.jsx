@@ -38,7 +38,7 @@ export default function CatalogFilters({ categories = [] }) {
   return (
     <form
       onSubmit={handleFilter}
-      className="bg-white border border-[#d9e1e7] rounded-xl p-4 shadow-xs space-y-3"
+      className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-3"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Search */}
@@ -51,7 +51,7 @@ export default function CatalogFilters({ categories = [] }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari gedung, tanah..."
-            className="w-full px-3 py-2 text-xs text-[#16222b] bg-white border border-[#c7d2da] rounded-lg focus:outline-none focus:border-[#0e6b7a] focus:ring-1 focus:ring-[#0e6b7a]"
+            className="w-full px-3 py-2 text-xs text-[#16222b] bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#0e6b7a] focus:ring-1 focus:ring-[#0e6b7a]"
           />
         </div>
 
@@ -63,7 +63,7 @@ export default function CatalogFilters({ categories = [] }) {
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-3 py-2 text-xs text-[#16222b] bg-white border border-[#c7d2da] rounded-lg focus:outline-none focus:border-[#0e6b7a] focus:ring-1 focus:ring-[#0e6b7a]"
+            className="w-full px-3 py-2 text-xs text-[#16222b] bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#0e6b7a] focus:ring-1 focus:ring-[#0e6b7a]"
           >
             <option value="">Semua Kategori</option>
             {categories.map((c) => (
@@ -84,7 +84,7 @@ export default function CatalogFilters({ categories = [] }) {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Kawasan, jalan..."
-            className="w-full px-3 py-2 text-xs text-[#16222b] bg-white border border-[#c7d2da] rounded-lg focus:outline-none focus:border-[#0e6b7a] focus:ring-1 focus:ring-[#0e6b7a]"
+            className="w-full px-3 py-2 text-xs text-[#16222b] bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-[#0e6b7a] focus:ring-1 focus:ring-[#0e6b7a]"
           />
         </div>
 

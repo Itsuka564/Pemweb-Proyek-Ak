@@ -135,7 +135,10 @@ export default function Navbar({
               className="flex items-center gap-2.5 font-extrabold text-lg tracking-tight group"
             >
               <span className="w-8 h-8 rounded-lg bg-[#f2a33a] text-[#16222b] grid place-items-center text-sm font-black shadow-xs transition-transform group-hover:scale-105">
-                ▣
+                <svg className="w-4 h-4 text-[#16222b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="3" />
+                  <rect width="8" height="8" x="8" y="8" rx="1" fill="currentColor" />
+                </svg>
               </span>
               <span className="text-white text-xl">SewaAset</span>
             </Link>
@@ -165,19 +168,17 @@ export default function Navbar({
                 </div>
                 {onSignOut ? (
                   <Button
-                    variant="outline"
+                    variant="outline-white"
                     size="sm"
                     onClick={onSignOut}
-                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
                   >
                     Keluar
                   </Button>
                 ) : (
                   <Link href="/auth/keluar">
                     <Button
-                      variant="outline"
+                      variant="outline-white"
                       size="sm"
-                      className="bg-white/10 text-white border-white/20 hover:bg-white/20"
                     >
                       Keluar
                     </Button>
@@ -188,9 +189,8 @@ export default function Navbar({
               <div className="flex items-center gap-2">
                 <Link href="/masuk">
                   <Button
-                    variant="outline"
+                    variant="outline-white"
                     size="sm"
-                    className="bg-transparent text-white border-white/30 hover:bg-white/15"
                   >
                     Masuk
                   </Button>

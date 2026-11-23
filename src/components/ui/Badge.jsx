@@ -43,11 +43,17 @@ export default function Badge({ status, variant, children, className = "" }) {
   const key = (variant || status || "").toString().toLowerCase().replace(/\s+/g, "_");
   const colorClass = BADGE_STYLES[key] || "bg-slate-100 text-slate-700 border-slate-200";
 
+  const formattedContent = children !== undefined ? children : (
+    typeof status === "string"
+      ? status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : status
+  );
+
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${colorClass} ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border capitalize ${colorClass} ${className}`}
     >
-      {children || status}
+      {formattedContent}
     </span>
   );
 }
