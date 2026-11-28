@@ -27,6 +27,8 @@ export default function Button({
     ghost: "bg-transparent hover:bg-[#d7edf0] text-[#0e6b7a]",
     danger: "bg-white hover:bg-[#fadcdc] text-[#9c2222] border border-[#d64545]",
     "danger-solid": "bg-[#9c2222] hover:bg-[#7e1b1b] text-white border border-transparent",
+    "outline-white": "bg-transparent hover:bg-white/10 text-white border border-white/40",
+    white: "bg-white hover:bg-slate-100 text-[#0D2438] border border-transparent shadow-sm",
   };
 
   return (

@@ -10,10 +10,10 @@ export default function Card({
 }) {
   return (
     <div
-      className={`bg-white border border-[#d9e1e7] rounded-xl shadow-xs overflow-hidden ${className}`}
+      className={`bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden ${className}`}
     >
       {(title || subtitle || action) && (
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#d9e1e7]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
           <div>
             {title && (
               <h3 className="text-base font-bold text-[#0a4a56] leading-tight">

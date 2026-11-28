@@ -6,7 +6,7 @@ import CatalogFilters from "./CatalogFilters";
 import { getAssets, getAssetCategories } from "@/lib/db/assets";
 
 export const metadata = {
-  title: "Katalog Aset — SewaAset Kelompok 10",
+  title: "Katalog Aset — SewaAset",
   description: "Daftar inventaris aset tanah, gedung pertemuan, dan ruangan yang dapat disewa.",
 };
 
@@ -35,9 +35,12 @@ async function CatalogContent({ searchParams }) {
       </div>
 
       {assets.length === 0 ? (
-        <div className="bg-white border border-[#d9e1e7] rounded-xl p-12 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 grid place-items-center text-xl mx-auto">
-            🔍
+        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 grid place-items-center mx-auto">
+            <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
           </div>
           <h3 className="text-base font-bold text-[#16222b]">
             Tidak Ada Aset yang Sesuai Kriteria
@@ -60,10 +63,10 @@ async function CatalogContent({ searchParams }) {
 function CatalogSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-20 bg-white border border-[#d9e1e7] rounded-xl"></div>
+      <div className="h-20 bg-white border border-slate-200 rounded-xl"></div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="bg-white border border-[#d9e1e7] rounded-xl p-5 space-y-4">
+          <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
             <div className="h-44 bg-slate-200 rounded-lg"></div>
             <div className="h-4 bg-slate-200 rounded w-1/3"></div>
             <div className="h-6 bg-slate-200 rounded w-3/4"></div>

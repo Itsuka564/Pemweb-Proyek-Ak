@@ -51,7 +51,7 @@ export default function AvailabilityCalendar({ blocks = [], settings = { prepara
   }
 
   return (
-    <div className="bg-white border border-[#d9e1e7] rounded-xl p-5 shadow-xs space-y-4">
+    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-sm font-bold text-[#0a4a56]">
@@ -65,10 +65,12 @@ export default function AvailabilityCalendar({ blocks = [], settings = { prepara
           <button
             type="button"
             onClick={prevMonth}
-            className="p-1.5 rounded-lg border border-[#d9e1e7] hover:bg-slate-100 text-[#16222b] text-xs font-bold"
+            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[#16222b] text-xs font-bold transition-colors inline-flex items-center justify-center w-7 h-7"
             aria-label="Bulan sebelumnya"
           >
-            ←
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
           <span className="text-xs font-bold text-[#16222b] px-2 min-w-[120px] text-center">
             {monthNames[month]} {year}
@@ -76,10 +78,12 @@ export default function AvailabilityCalendar({ blocks = [], settings = { prepara
           <button
             type="button"
             onClick={nextMonth}
-            className="p-1.5 rounded-lg border border-[#d9e1e7] hover:bg-slate-100 text-[#16222b] text-xs font-bold"
+            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[#16222b] text-xs font-bold transition-colors inline-flex items-center justify-center w-7 h-7"
             aria-label="Bulan berikutnya"
           >
-            →
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m9 18 6-6-6-6" />
+            </svg>
           </button>
         </div>
       </div>
@@ -115,10 +119,10 @@ export default function AvailabilityCalendar({ blocks = [], settings = { prepara
       </div>
 
       {/* Legenda */}
-      <div className="pt-3 border-t border-[#d9e1e7] flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#f4f7f9] border border-[#d9e1e7]"></span>
+            <span className="w-3 h-3 rounded bg-[#f4f7f9] border border-slate-200"></span>
             <span className="text-[#5a6b78] text-[11px]">Tersedia</span>
           </div>
           <div className="flex items-center gap-1.5">
