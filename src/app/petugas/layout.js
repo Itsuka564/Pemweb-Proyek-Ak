@@ -58,7 +58,7 @@ async function getOfficerSessionAndCounts() {
     supabase
       .from("rental_transactions")
       .select("*", { count: "exact", head: true })
-      .eq("status", "dibayar"),
+      .eq("status", "disetujui"),
     supabase
       .from("rental_transactions")
       .select("*", { count: "exact", head: true })

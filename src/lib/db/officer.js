@@ -97,7 +97,12 @@ export async function getOfficerDashboardStats(officerId = null) {
     };
   } catch (err) {
     console.error("Error getOfficerDashboardStats:", err);
-    return getMockOfficerStats();
+    return {
+      pendingHandovers: 0,
+      pendingReturns: 0,
+      completedTasks: 0,
+      urgentTasks: [],
+    };
   }
 }
 
@@ -141,11 +146,11 @@ export async function getOfficerTasks({
 
     // Filter status operasional petugas
     if (statusFilter === "serah_terima") {
-      query = query.in("status", ["disetujui", "dibayar"]);
+      query = query.eq("status", "disetujui");
     } else if (statusFilter === "pengembalian") {
       query = query.eq("status", "sedang_disewa");
     } else if (statusFilter === "selesai") {
-      query = query.in("status", ["dikembalikan"]);
+      query = query.eq("status", "dikembalikan");
     } else {
       // Semua tugas operasional
       query = query.in("status", ["disetujui", "sedang_disewa", "dikembalikan"]);
@@ -154,7 +159,7 @@ export async function getOfficerTasks({
     const { data, error } = await query;
     if (error || !data) {
       console.warn("getOfficerTasks error:", error?.message);
-      return filterMockOfficerTasks({ statusFilter, search });
+      return [];
     }
 
     let results = data.map((t) => {
@@ -177,8 +182,8 @@ export async function getOfficerTasks({
         endDate: t.end_date,
         rentalDays: t.rental_days || 1,
         purpose: t.purpose || "-",
-        hasHandover: Boolean(t.handover && t.handover.length > 0),
-        hasReturn: Boolean(t.returnRecord && t.returnRecord.length > 0),
+        hasHandover: Boolean(t.handover && (Array.isArray(t.handover) ? t.handover.length > 0 : t.handover?.id)),
+        hasReturn: Boolean(t.returnRecord && (Array.isArray(t.returnRecord) ? t.returnRecord.length > 0 : t.returnRecord?.id)),
         isAssignedToCurrent,
       };
     });
@@ -196,7 +201,7 @@ export async function getOfficerTasks({
     return results;
   } catch (err) {
     console.error("Error getOfficerTasks:", err);
-    return filterMockOfficerTasks({ statusFilter, search });
+    return [];
   }
 }
 
