@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Card from "@/components/ui/Card";
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }) {
 }
 
 async function TransactionDetailContent({ paramsPromise, searchParamsPromise }) {
+  await connection();
   const { id } = await paramsPromise;
   const searchParams = await searchParamsPromise;
   const isSubmitted = searchParams?.status === "submitted";

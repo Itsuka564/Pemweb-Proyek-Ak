@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -8,6 +9,7 @@ import Link from "next/link";
 import VerificationForm from "./VerificationForm";
 
 async function VerificationContent({ searchParams }) {
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },

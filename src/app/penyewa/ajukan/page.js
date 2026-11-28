@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { connection } from "next/server";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import BookingForm from "./BookingForm";
@@ -12,6 +13,7 @@ export const metadata = {
 };
 
 async function BookingPageContent({ searchParamsPromise }) {
+  await connection();
   const params = await searchParamsPromise;
   const initialAssetId = params?.assetId || "";
 
