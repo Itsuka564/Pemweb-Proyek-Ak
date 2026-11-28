@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import PushNotificationButton from "@/components/ui/PushNotificationButton";
 import { getRenterTransactions } from "@/lib/db/transactions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,6 +42,19 @@ async function RenterDashboardContent() {
 
   return (
     <div className="space-y-6">
+      {/* Web Push Notification Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl bg-gradient-to-r from-[#0a4a56] to-[#0e6b7a] text-white shadow-sm">
+        <div className="space-y-1">
+          <h3 className="text-sm font-extrabold flex items-center gap-2">
+            <span>🔔</span> Notifikasi Web Push Real-Time
+          </h3>
+          <p className="text-xs text-[#d7edf0] max-w-xl">
+            Aktifkan notifikasi peramban untuk mendapatkan pembaruan seketika saat pengajuan sewa Anda disetujui Admin atau saat aset diserahterimakan oleh Petugas.
+          </p>
+        </div>
+        <PushNotificationButton className="shrink-0" />
+      </div>
+
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4 flex items-center justify-between">

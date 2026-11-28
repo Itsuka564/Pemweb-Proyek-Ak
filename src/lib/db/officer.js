@@ -396,7 +396,7 @@ export async function recordHandover({
   // 1. Validasi status transaksi saat ini (harus 'dibayar' atau 'disetujui')
   const { data: tx, error: txError } = await supabase
     .from("rental_transactions")
-    .select("id, status, transaction_code")
+    .select("id, status, transaction_code, renter_id")
     .eq("id", transactionId)
     .single();
 
@@ -448,6 +448,22 @@ export async function recordHandover({
     changed_at: now,
   });
 
+  // 5. Enqueue Web Push Notification ke background worker (asinkron & non-blocking)
+  if (tx?.renter_id) {
+    try {
+      const { enqueueNotification } = await import("@/lib/push/queue");
+      await enqueueNotification({
+        userId: tx.renter_id,
+        title: "Serah Terima Aset Selesai 🤝",
+        message: `Aset transaksi ${tx.transaction_code} telah diserahkan oleh petugas. Masa sewa telah aktif.`,
+        targetUrl: `/penyewa/transaksi/${transactionId}`,
+        dedupeKey: `handover-${transactionId}`,
+      });
+    } catch (pushErr) {
+      console.warn("Enqueue push notification error (non-blocking):", pushErr.message);
+    }
+  }
+
   return { success: true, transactionId, newStatus: "sedang_disewa" };
 }
 
@@ -481,6 +497,7 @@ export async function recordReturn({
       id,
       status,
       transaction_code,
+      renter_id,
       items:rental_transaction_items(id, asset_id)
     `)
     .eq("id", transactionId)
@@ -565,6 +582,22 @@ export async function recordReturn({
       })
       .in("rental_item_id", itemIds)
       .eq("status", "active");
+  }
+
+  // 7. Enqueue Web Push Notification ke background worker (asinkron & non-blocking)
+  if (tx?.renter_id) {
+    try {
+      const { enqueueNotification } = await import("@/lib/push/queue");
+      await enqueueNotification({
+        userId: tx.renter_id,
+        title: "Pengembalian Aset Dicatat 🔄",
+        message: `Pemeriksaan pengembalian aset transaksi ${tx.transaction_code} telah selesai. Kondisi akhir: ${finalCondition}.`,
+        targetUrl: `/penyewa/transaksi/${transactionId}`,
+        dedupeKey: `return-${transactionId}`,
+      });
+    } catch (pushErr) {
+      console.warn("Enqueue push notification error (non-blocking):", pushErr.message);
+    }
   }
 
   return { success: true, transactionId, newStatus: "dikembalikan" };

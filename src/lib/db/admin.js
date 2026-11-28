@@ -1079,6 +1079,7 @@ export async function approveRentalApplication({
       id,
       transaction_code,
       status,
+      renter_id,
       start_date,
       end_date,
       items:rental_transaction_items(id, asset_id)
@@ -1224,6 +1225,20 @@ export async function approveRentalApplication({
     throw new Error(`Gagal membuat blokir jadwal aset: ${blockError.message}`);
   }
 
+  // 9. Enqueue Web Push Notification ke background worker (asinkron & non-blocking)
+  try {
+    const { enqueueNotification } = await import("@/lib/push/queue");
+    await enqueueNotification({
+      userId: tx.renter_id,
+      title: "Pengajuan Sewa Disetujui! 🎉",
+      message: `Pengajuan sewa ${tx.transaction_code} telah disetujui Admin. Silakan selesaikan pembayaran.`,
+      targetUrl: `/penyewa/transaksi/${transactionId}`,
+      dedupeKey: `approve-${transactionId}`,
+    });
+  } catch (pushErr) {
+    console.warn("Enqueue push notification error (non-blocking):", pushErr.message);
+  }
+
   return { success: true, transactionId, status: "disetujui", paymentDueAt };
 }
 
@@ -1253,7 +1268,7 @@ export async function rejectRentalApplication({
   // Ambil data lama
   const { data: tx } = await supabase
     .from("rental_transactions")
-    .select("status, items:rental_transaction_items(id)")
+    .select("status, renter_id, transaction_code, items:rental_transaction_items(id)")
     .eq("id", transactionId)
     .single();
 
@@ -1302,6 +1317,22 @@ export async function rejectRentalApplication({
       .update({ status: "released", released_at: now })
       .in("rental_item_id", itemIds)
       .eq("status", "active");
+  }
+
+  // 5. Enqueue Web Push Notification ke background worker (asinkron & non-blocking)
+  if (tx?.renter_id) {
+    try {
+      const { enqueueNotification } = await import("@/lib/push/queue");
+      await enqueueNotification({
+        userId: tx.renter_id,
+        title: "Pengajuan Sewa Ditolak ⚠️",
+        message: `Pengajuan sewa ${tx.transaction_code || ""} ditolak: ${reason.trim()}`,
+        targetUrl: `/penyewa/transaksi/${transactionId}`,
+        dedupeKey: `reject-${transactionId}`,
+      });
+    } catch (pushErr) {
+      console.warn("Enqueue push notification error (non-blocking):", pushErr.message);
+    }
   }
 
   return { success: true, transactionId, status: "ditolak" };

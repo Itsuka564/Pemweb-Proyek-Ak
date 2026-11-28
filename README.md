@@ -11,12 +11,41 @@ Sistem Informasi Penyewaan Aset merupakan aplikasi berbasis web yang dirancang u
 - Mempermudah pemantauan status penyewaan dan pengembalian aset.
 
 ## Teknologi yang Digunakan
-- Frontend: Next.js, JavaScript
-- Backend: Next.js Route Handlers
+- Frontend: Next.js, React, JavaScript, Tailwind CSS
+- Backend: Next.js Route Handlers & Server Actions
 - Database: PostgreSQL (Supabase)
 - Authentication: Supabase Auth
 - Storage: Supabase Storage
+- Web Push & Worker: Service Worker (`public/sw.js`), VAPID (`web-push`), Background Worker (`scripts/worker.mjs`)
 - Deployment: Vercel
+
+## Cara Menjalankan Aplikasi
+
+### 1. Instalasi Dependensi
+```bash
+npm install
+```
+
+### 2. Konfigurasi Environment Variables
+Salin file `.env.example` menjadi `.env.local` dan sesuaikan kredensial Supabase, Midtrans, serta VAPID Web Push:
+```bash
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:...
+```
+
+### 3. Menjalankan Server Aplikasi Next.js
+```bash
+npm run dev
+```
+Aplikasi berjalan pada `http://localhost:3000`.
+
+### 4. Menjalankan Background Worker (Web Push & Antrean)
+Buka terminal terpisah, lalu jalankan:
+```bash
+npm run worker
+```
+Worker akan memproses antrean notifikasi persisten (`notification_jobs`) secara asinkron setiap ada kejadian bisnis (persetujuan sewa, serah terima, pengembalian aset).
 
 ## Role Pengguna
 1. Admin
