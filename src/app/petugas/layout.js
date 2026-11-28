@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import OfficerSidebar from "@/components/layout/OfficerSidebar";
 
 export const metadata = {
-  title: "Portal Petugas Lapangan — SewaAset Kelompok 10",
+  title: "Portal Petugas Lapangan — SewaAset",
   description: "Pencatatan serah terima dan pengembalian aset sewa oleh petugas lapangan.",
 };
 
@@ -101,21 +101,19 @@ export default function OfficerLayout({ children }) {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header */}
-        <header className="h-14 bg-white border-b border-[#d9e1e7] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#5a6b78] uppercase tracking-wider">
-              Kelompok 10
-            </span>
-            <span className="text-[#5a6b78]">•</span>
-            <span className="text-xs font-semibold text-[#0a4a56]">
-              Portal Petugas Lapangan
-            </span>
-          </div>
+        <header className="h-14 bg-white/95 backdrop-blur-xs border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center sticky top-0 z-30">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="font-medium text-slate-800">Portal Petugas</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-500">Operasional Lapangan</span>
+            </div>
 
-          <div className="flex items-center gap-2 text-xs font-medium text-[#5a6b78]">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span className="hidden sm:inline">Status Modul:</span>
-            <span className="font-bold text-[#16222b]">Operasional Serah Terima & Pengembalian</span>
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+              <span className="hidden sm:inline">Serah Terima &amp; Pengembalian</span>
+              <span className="sm:hidden">Operasional Aktif</span>
+            </div>
           </div>
         </header>
 
