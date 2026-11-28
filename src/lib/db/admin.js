@@ -1142,8 +1142,35 @@ export async function approveRentalApplication({
   if (updateError) {
     throw new Error(`Gagal memperbarui transaksi: ${updateError.message}`);
   }
+
+  // Helper: rollback status transaksi ke menunggu_persetujuan jika langkah pasca-update gagal.
+  // Dipanggil sebelum throw agar status tidak terjebak di 'disetujui' tanpa data pendukung.
+  const rollbackStatus = async (reason) => {
+    const { error: rbError } = await supabase
+      .from("rental_transactions")
+      .update({
+        status: "menunggu_persetujuan",
+        decision_note: null,
+        processed_by: null,
+        processed_at: null,
+        payment_due_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", transactionId);
+    if (rbError) {
+      console.error(
+        `[approveRental] Rollback gagal untuk transaksi ${transactionId}:`,
+        rbError.message
+      );
+    } else {
+      console.warn(
+        `[approveRental] Status transaksi ${transactionId} dikembalikan ke 'menunggu_persetujuan'. Penyebab: ${reason}`
+      );
+    }
+  };
+
   // 6. Insert ke rental_reviews
-  await supabase.from("rental_reviews").insert({
+  const { error: reviewError } = await supabase.from("rental_reviews").insert({
     transaction_id: transactionId,
     reviewer_id: adminId,
     decision: "disetujui",
@@ -1151,8 +1178,13 @@ export async function approveRentalApplication({
     reviewed_at: now,
   });
 
+  if (reviewError) {
+    await rollbackStatus(`Gagal insert rental_reviews: ${reviewError.message}`);
+    throw new Error(`Gagal mencatat keputusan review: ${reviewError.message}`);
+  }
+
   // 7. Insert ke rental_status_history
-  await supabase.from("rental_status_history").insert({
+  const { error: historyError } = await supabase.from("rental_status_history").insert({
     rental_id: transactionId,
     old_status: "menunggu_persetujuan",
     new_status: "disetujui",
@@ -1160,6 +1192,11 @@ export async function approveRentalApplication({
     change_note: note,
     changed_at: now,
   });
+
+  if (historyError) {
+    await rollbackStatus(`Gagal insert rental_status_history: ${historyError.message}`);
+    throw new Error(`Gagal mencatat riwayat status: ${historyError.message}`);
+  }
 
   // 8. Buat blokir jadwal pada asset_booking_blocks untuk setiap item aset
   const blocksToInsert = tx.items.map((item) => ({
@@ -1177,10 +1214,14 @@ export async function approveRentalApplication({
 
   if (blockError) {
     console.error("Gagal membuat asset_booking_blocks:", blockError.message);
-    // Jika gagal karena constraint GiST exclusion overlap, lemparkan error
     if (blockError.message.includes("asset_booking_blocks_no_overlap")) {
+      // Konflik terdeteksi oleh GiST exclusion constraint (double booking)
+      await rollbackStatus(`Double booking terdeteksi oleh constraint: ${blockError.message}`);
       throw new Error("Persetujuan gagal: Terdeteksi double booking pada salah satu aset.");
     }
+    // Error lain (RLS, FK, dsb.) — rollback status agar tidak menggantung
+    await rollbackStatus(`Error non-overlap saat insert blocks: ${blockError.message}`);
+    throw new Error(`Gagal membuat blokir jadwal aset: ${blockError.message}`);
   }
 
   return { success: true, transactionId, status: "disetujui", paymentDueAt };
