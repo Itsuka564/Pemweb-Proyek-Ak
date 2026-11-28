@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 
 export const metadata = {
-  title: "Admin Portal — SewaAset Kelompok 10",
+  title: "Admin Portal — SewaAset",
   description: "Panel kendali administrasi pengelolaan aset, verifikasi pengguna, dan persetujuan sewa.",
 };
 
@@ -102,21 +102,13 @@ export default function AdminLayout({ children }) {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Admin Top Header */}
-        <header className="h-14 bg-white border-b border-[#d9e1e7] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#5a6b78] uppercase tracking-wider">
-              Kelompok 10
-            </span>
-            <span className="text-[#5a6b78]">•</span>
-            <span className="text-xs font-semibold text-[#0a4a56]">
-              Sistem Informasi Penyewaan Aset
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-medium text-[#5a6b78]">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="hidden sm:inline">Database Live:</span>
-            <span className="font-bold text-[#16222b]">Supabase PostgreSQL</span>
+        <header className="h-14 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 flex items-center sticky top-0 z-30">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="font-semibold text-slate-700">Portal Administrasi</span>
+              <span className="text-slate-300">/</span>
+              <span>Manajemen Aset</span>
+            </div>
           </div>
         </header>
 
