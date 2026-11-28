@@ -601,12 +601,16 @@ export async function updateAsset(
   };
 
   if (physicalCondition) {
-    payload.condition = physicalCondition;
+    // Hanya perbarui kolom legacy 'condition' jika nilainya 'baik' agar tidak memicu constraint check lama
+    if (physicalCondition === "baik") {
+      payload.condition = "baik";
+    }
   }
   if (operationalStatus) {
-    payload.availability = operationalStatus === "siap" ? "tersedia" : "tidak_tersedia";
+    // Enum asset_availability valid: 'tersedia', 'dalam_perawatan', 'sedang_disewa', 'dipesan'
+    payload.availability = operationalStatus === "siap" ? "tersedia" : "dalam_perawatan";
   }
-  if (dailyRate !== undefined && dailyRate !== null) {
+  if (dailyRate !== undefined && dailyRate !== null && !isNaN(Number(dailyRate))) {
     payload.daily_rate = Number(dailyRate);
   }
 
@@ -624,6 +628,20 @@ export async function updateAsset(
 
   if (error) {
     throw new Error(`Gagal memperbarui aset: ${error.message}`);
+  }
+
+  // Sinkronisasi tarif harian ke tabel asset_rates jika ada perubahan nominal
+  if (dailyRate !== undefined && dailyRate !== null && !isNaN(Number(dailyRate))) {
+    try {
+      await upsertAssetRate({
+        assetId: id,
+        ratePeriod: "harian",
+        amount: Number(dailyRate),
+        effectiveFrom: new Date().toISOString().slice(0, 10),
+      });
+    } catch (e) {
+      console.warn("Catatan sinkronisasi asset_rates:", e?.message);
+    }
   }
 
   return { success: true, id };
@@ -929,7 +947,7 @@ export async function getAdminRentalApplicationById(id) {
           full_name,
           phone,
           address,
-          verifications:user_verifications(status, document_type)
+          verifications:user_verifications!user_verifications_user_id_fkey(status, document_type)
         ),
         processor:profiles!rental_transactions_processed_by_fkey(full_name),
         items:rental_transaction_items(
@@ -1048,7 +1066,7 @@ export async function approveRentalApplication({
   note = "Pengajuan sewa telah disetujui. Silakan lanjutkan pembayaran.",
 }) {
   if (!isLiveSupabase()) {
-    return { success: true, transactionId, status: "menunggu_pembayaran" };
+    return { success: true, transactionId, status: "disetujui" };
   }
 
   const supabase = await getSupabaseForAdmin();
@@ -1107,11 +1125,12 @@ export async function approveRentalApplication({
   const paymentDueAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
   const now = new Date().toISOString();
 
+
   // 5. Update transaksi status
   const { error: updateError } = await supabase
     .from("rental_transactions")
     .update({
-      status: "menunggu_pembayaran",
+      status: "disetujui",
       decision_note: note,
       processed_by: adminId,
       processed_at: now,
@@ -1123,7 +1142,6 @@ export async function approveRentalApplication({
   if (updateError) {
     throw new Error(`Gagal memperbarui transaksi: ${updateError.message}`);
   }
-
   // 6. Insert ke rental_reviews
   await supabase.from("rental_reviews").insert({
     transaction_id: transactionId,
@@ -1137,7 +1155,7 @@ export async function approveRentalApplication({
   await supabase.from("rental_status_history").insert({
     rental_id: transactionId,
     old_status: "menunggu_persetujuan",
-    new_status: "menunggu_pembayaran",
+    new_status: "disetujui",
     changed_by: adminId,
     change_note: note,
     changed_at: now,
@@ -1165,7 +1183,7 @@ export async function approveRentalApplication({
     }
   }
 
-  return { success: true, transactionId, status: "menunggu_pembayaran", paymentDueAt };
+  return { success: true, transactionId, status: "disetujui", paymentDueAt };
 }
 
 /**

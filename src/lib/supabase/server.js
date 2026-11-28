@@ -1,5 +1,5 @@
-
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export async function createClient() {
@@ -21,10 +21,22 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // Cookie tidak dapat diubah dari Server Component.
+            // Cookie dapat dikelola melalui Server Action atau Route Handler.
           }
         },
       },
     }
+  );
+}
+
+/**
+ * Client service role — HANYA untuk operasi server-side yang perlu bypass RLS.
+ * JANGAN pernah kirim client ini ke browser.
+ */
+export function createServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    { auth: { persistSession: false, autoRefreshToken: false } }
   );
 }

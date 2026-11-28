@@ -112,10 +112,10 @@ async function AssetDetailContent({ paramsPromise }) {
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
           <div className="h-72 sm:h-96 bg-[#d7edf0]/50 flex items-center justify-center relative overflow-hidden">
-            {asset.photos?.[0]?.storage_path && asset.photos[0].storage_path.startsWith("http") ? (
+            {asset.photos?.[0]?.url ? (
               <img
-                src={asset.photos[0].storage_path}
-                alt={asset.name}
+                src={asset.photos[0].url}
+                alt={asset.photos[0].alt_text || asset.name}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -134,8 +134,8 @@ async function AssetDetailContent({ paramsPromise }) {
                   key={idx}
                   className="w-20 h-16 rounded-lg bg-[#d7edf0]/40 border border-slate-200 shrink-0 overflow-hidden"
                 >
-                  {p.storage_path.startsWith("http") ? (
-                    <img src={p.storage_path} alt={p.alt_text} className="w-full h-full object-cover" />
+                  {p.url ? (
+                    <img src={p.url} alt={p.alt_text || asset.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full grid place-items-center text-slate-400">
                       <svg className="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

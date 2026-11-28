@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 
 const STATUS_OPTIONS = [
   { label: "Semua Tugas Operasional", value: "semua" },
-  { label: "🤝 Perlu Serah Terima (Dibayar)", value: "serah_terima" },
+  { label: "🤝 Perlu Serah Terima", value: "serah_terima" },
   { label: "🔄 Perlu Pengembalian (Sedang Disewa)", value: "pengembalian" },
   { label: "📜 Riwayat Selesai", value: "selesai" },
 ];

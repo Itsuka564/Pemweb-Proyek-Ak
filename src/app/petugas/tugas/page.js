@@ -95,7 +95,7 @@ async function OfficerTaskList({ searchParamsPromise }) {
                     <Link href={`/petugas/tugas/${task.id}`}>
                       <Button
                         variant={
-                          task.status === "dibayar"
+                          task.status === "disetujui" || task.status === "dibayar"
                             ? "primary"
                             : task.status === "sedang_disewa"
                             ? "accent"
@@ -104,7 +104,7 @@ async function OfficerTaskList({ searchParamsPromise }) {
                         size="sm"
                         className="text-xs py-1 px-3"
                       >
-                        {task.status === "dibayar"
+                        {task.status === "disetujui" || task.status === "dibayar"
                           ? "🤝 Serah Terima"
                           : task.status === "sedang_disewa"
                           ? "🔄 Pengembalian"

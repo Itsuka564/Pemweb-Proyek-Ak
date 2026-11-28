@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Card from "@/components/ui/Card";
@@ -19,7 +20,11 @@ async function RenterDashboardContent() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const transactions = await getRenterTransactions(user?.id || "mock-renter");
+  if (!user) {
+    redirect("/masuk?redirect=/penyewa/dashboard");
+  }
+
+  const transactions = await getRenterTransactions(user.id);
 
   const countMenunggu = transactions.filter((t) => t.status === "menunggu_persetujuan").length;
   const countDisetujui = transactions.filter((t) => t.status === "disetujui" || t.status === "menunggu_pembayaran").length;

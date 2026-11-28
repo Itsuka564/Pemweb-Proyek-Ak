@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   createAsset,
   updateAsset,
@@ -110,6 +111,7 @@ export async function updateAssetAction(prevState, formData) {
     const categoryId = formData.get("categoryId");
     const name = formData.get("name");
     const description = formData.get("description") || "";
+    const dailyRate = formData.get("dailyRate");
     const areaSize = formData.get("areaSize");
     const areaUnit = formData.get("areaUnit") || "m²";
     const location = formData.get("location") || "";
@@ -128,6 +130,7 @@ export async function updateAssetAction(prevState, formData) {
       name,
       description,
       categoryId,
+      dailyRate: dailyRate !== null && dailyRate !== "" ? Number(dailyRate) : undefined,
       areaSize,
       areaUnit,
       location,
@@ -231,7 +234,9 @@ export async function uploadAssetPhotoAction(prevState, formData) {
       return { error: "File harus berupa format gambar (JPG, PNG, WebP)." };
     }
 
-    const supabase = await createClient();
+    const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+      ? createAdminClient()
+      : await createClient();
     const fileExt = file.name.split(".").pop();
     const fileName = `${assetId}/${Date.now()}_photo.${fileExt}`;
 

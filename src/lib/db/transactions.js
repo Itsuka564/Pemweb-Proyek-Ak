@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 
 export async function getRenterTransactions(renterId) {
+  if (!renterId || renterId === "mock-renter") {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
+      return getMockRenterTransactions(renterId);
+    }
+    return [];
+  }
+
   try {
     const supabase = await createClient();
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
@@ -32,17 +39,25 @@ export async function getRenterTransactions(renterId) {
       .eq("renter_id", renterId)
       .order("created_at", { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      return getMockRenterTransactions(renterId);
+    if (error) {
+      console.error("Gagal mengambil transaksi penyewa:", error.message);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
     }
 
     return data.map(formatTransactionHeader);
-  } catch {
-    return getMockRenterTransactions(renterId);
+  } catch (err) {
+    console.error("Error getRenterTransactions:", err);
+    return [];
   }
 }
 
 export async function getTransactionById(transactionId, renterId = null) {
+  if (!transactionId) return null;
+
   try {
     const supabase = await createClient();
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id")) {
@@ -94,18 +109,17 @@ export async function getTransactionById(transactionId, renterId = null) {
     const { data, error } = await query.maybeSingle();
 
     if (error || !data) {
-      const mock = getMockRenterTransactions().find(
-        (t) => t.id === transactionId || t.code === transactionId
-      );
-      return mock || null;
+      return null;
+    }
+
+    if (renterId && data.renter_id !== renterId) {
+      return null;
     }
 
     return formatTransactionDetail(data);
-  } catch {
-    const mock = getMockRenterTransactions().find(
-      (t) => t.id === transactionId || t.code === transactionId
-    );
-    return mock || null;
+  } catch (err) {
+    console.error("Error getTransactionById:", err);
+    return null;
   }
 }
 

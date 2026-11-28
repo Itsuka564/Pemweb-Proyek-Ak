@@ -1,4 +1,3 @@
-
 import { createBrowserClient } from "@supabase/ssr";
 
 let client = null;
@@ -15,4 +14,3 @@ export function createClient() {
 
   return client;
 }
-

@@ -90,7 +90,7 @@ async function PopularAssetsList() {
         <Card key={asset.id} className="hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between border-slate-200">
           <div className="space-y-4">
             <div className="h-40 rounded-lg bg-[#d7edf0]/50 flex items-center justify-center overflow-hidden">
-              {asset.photo && asset.photo.startsWith("http") ? (
+              {asset.photo ? (
                 <img
                   src={asset.photo}
                   alt={asset.name}
@@ -125,7 +125,7 @@ async function PopularAssetsList() {
                   <span className="text-xs font-normal text-[#5a6b78]"> / hari</span>
                 </p>
               </div>
-              <Link href="/katalog">
+              <Link href={`/katalog/${asset.id}`}>
                 <Button variant="outline" size="sm">
                   Detail
                 </Button>
